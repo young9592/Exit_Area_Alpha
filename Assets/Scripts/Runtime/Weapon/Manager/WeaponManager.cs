@@ -1,10 +1,48 @@
+using System;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
 
 public class WeaponManager : MonoBehaviour
-{ 
-    public enum HandState
+{
+    [System.Serializable]
+    private class Slot
+    {
+        [SerializeField] private HandType handType;
+        [SerializeField] private AudioClip clip;
+        [SerializeField] private float fireDelay;
+        [SerializeField] private float reloadDelay;
+
+        public Slot(HandType handType, AudioClip clip, float fireDelay, float reloadDelay)
+        {
+            this.handType = handType;
+            this.clip = clip;
+            this.fireDelay = fireDelay;
+            this.reloadDelay = reloadDelay;
+        }
+        public HandType Hand
+        {
+            get { return handType; }
+            set { handType = value; }
+        }
+
+        public AudioClip GetAudioClip
+        {
+            get { return clip; }
+        }
+
+        public float GetFireDelay
+        {
+            get { return fireDelay; }
+        }
+
+        public float GetReloadDelay
+        {
+            get { return reloadDelay; }
+        }
+    }
+
+    public enum HandType
     {
         None,
         Pistol,
@@ -12,69 +50,110 @@ public class WeaponManager : MonoBehaviour
     }
 
     #region Inspector
-    [SerializeField] private Animator _animator;
+    [Header("ÂüÁ¶")]
+    [SerializeField] private Player _player;
+    [SerializeField] private GameObject _rootWeaponGo;
+    [SerializeField] private AudioSource _audioSource;
 
-    [SerializeField] private string _paramHandState = "nHandState";
-
-    [SerializeField] private GameObject _rootGO;
-    [SerializeField] private RigBuilder _rig;
+    [Header("Slot")]
+    [SerializeField] private Slot[] _slots = new Slot[3];
     #endregion
 
     #region Field
-    private HandState _hand = HandState.None;
+    private int _curSlotIdx = 0;
 
-    private int _hashHandState;
+    private bool _isFire = false;
+    private bool _isReloading = false;
+
+    private CTimer _fireDelayTimer = new CTimer();
+    private CTimer _reloadDelayTimer = new CTimer();
     #endregion
 
     #region Property
-    public HandState GetHandState
-    {
-        get { return _hand; }
-    }
+
     #endregion
 
     private void Awake()
     {
-        if (_animator == null)
-        {
-            enabled = false;
-            return;
-        }
+        AudioClip clip = Resources.Load<AudioClip>("Sound/AR_01_Fire");
 
-        
+        _slots[0] = new Slot(HandType.Rifle, clip, 0.1f, 3.5f);
+        _slots[1] = new Slot(HandType.None, null, 0f, 0f);
+        _slots[2] = new Slot(HandType.None, null, 0f, 0f);
 
-        _hashHandState = Animator.StringToHash(_paramHandState);
-        _rig.enabled = false;
-        _rootGO.SetActive(false);
+        _audioSource = GetComponent<AudioSource>();
     }
 
     private void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        if (_isFire)
         {
-            _hand = HandState.None;
-            _animator.SetInteger(_hashHandState, (int)_hand);
-            _rig.enabled = false;
-            _rootGO.SetActive(false);
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            // current not use;
-            return;
-            _hand = HandState.Pistol;
-            _animator.SetInteger(_hashHandState, (int)_hand);
-        }
-        else if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            _hand = HandState.Rifle;
-            _animator.SetInteger(_hashHandState, (int)_hand);
-            _rig.enabled = true;
-            _rootGO.SetActive(true);
+            if (_fireDelayTimer.AddTimer())
+            {
+                _player.SuccessFireDelay();
+                _isFire = false;
+            }
         }
 
-        else if (Input.GetKey(KeyCode.Mouse0))
+        if (_isReloading)
         {
-            _animator.SetTrigger("tFire");
+            if (_reloadDelayTimer.AddTimer())
+            {
+                _player.SuccessReload();
+                _isReloading = false;
+            }
         }
     }
+
+    private void CheckSwap(int index, out HandType type)
+    {
+        if (_slots[index].Hand != HandType.None)
+        {
+            _rootWeaponGo.SetActive(true);
+        }
+        else
+        {
+            _rootWeaponGo.SetActive(false);
+        }
+
+        type = _slots[index].Hand;
+    }
+    public bool Fire()
+    {
+        if (_isFire || _isReloading)
+        {
+            return false;
+        }
+
+        _fireDelayTimer.SetTimer(_slots[_curSlotIdx].GetFireDelay);
+        _isFire = true;
+        _audioSource.clip = _slots[_curSlotIdx].GetAudioClip;
+        _audioSource.Play();
+        return true;
+    }
+    public bool Reload()
+    {
+        if (_isFire || _isReloading)
+        {
+            return false;
+        }
+
+        _reloadDelayTimer.SetTimer(_slots[_curSlotIdx].GetReloadDelay);
+        _isReloading = true;
+        return true;
+    }
+    public bool SelectSlot(int index, out HandType type)
+    {
+        if (_isFire || _isReloading)
+        {
+            type = HandType.None;
+            return false;
+        }
+
+        CheckSwap(index, out type);
+        _curSlotIdx = index;
+        return true;
+    }
+
+
 }

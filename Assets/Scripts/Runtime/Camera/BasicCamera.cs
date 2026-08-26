@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 
 public partial class BasicCamera : MonoBehaviour
 {
@@ -9,13 +9,19 @@ public partial class BasicCamera : MonoBehaviour
     }
 
     #region Inspector
-    [Header("ÇÊ¼ö ¿¬°á ¸ñ·Ï")]
+    [Header("í•„ìˆ˜ ì—°ê²° ëª©ë¡")]
     [SerializeField] private Transform _target;
     [SerializeField] private Camera _camera;
 
-    // »ı°¢ÇØº¸´Ï 1ÀÎÄª¸¸ ÇÊ¿äÇÏ´Ï ÀÌ°Íµµ ±»ÀÌ..?
-    [Header("½ÃÀÛ ¸ğµå")]
+    [Header("ì‹œì‘ ëª¨ë“œ")]
     [SerializeField] private ECameraMode _startMode = ECameraMode.ThirdPerson;
+
+    [Header("ë””ë²„ê·¸ ì—°ê²° ëª©ë¡")]
+    [SerializeField] private Transform _playerViewTr;
+    [SerializeField] private Transform _viewTr;
+    [SerializeField] private float _offsetForward = 1f;
+    [SerializeField] private float _offsetRight = 1f;
+    [SerializeField] private float _offsetTop = -2f;
     #endregion
 
     #region Field
@@ -42,6 +48,11 @@ public partial class BasicCamera : MonoBehaviour
         _camTr = _camera.transform;
 
         SetMode(_mode, true);
+    }
+
+    private void Update()
+    {
+        
     }
 
     private void LateUpdate()
@@ -99,5 +110,16 @@ public partial class BasicCamera : MonoBehaviour
 
         _camTr.position = Vector3.Lerp(_camTr.position, desiredPos, t);
         _camTr.rotation = Quaternion.Slerp(_camTr.rotation, desiredRot, t);
+
+        _viewTr.position = _target.position + _target.forward * _offsetForward +_target.right * _offsetRight + _target.up * _offsetTop;
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawRay(_target.transform.position, _target.transform.forward * 10f);
+        
+        Gizmos.color = Color.blue;
+        Gizmos.DrawRay(_playerViewTr.transform.position, _playerViewTr.transform.forward * 10f);
     }
 }
