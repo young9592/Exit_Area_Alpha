@@ -15,7 +15,7 @@ public partial class BasicCamera : MonoBehaviour
         Vector3 desiredPos;
         Quaternion desiredRot;
 
-        BuildFirstPose(out desiredPos, out desiredRot);
+        BuildThirdPose(out desiredPos, out desiredRot);
         ApplyPose(desiredPos, desiredRot, _thirdSharpness, snap);
     }
 
@@ -24,11 +24,11 @@ public partial class BasicCamera : MonoBehaviour
         Vector3 desiredPos;
         Quaternion desiredRot;
 
-        BuildFirstPose(out desiredPos, out desiredRot);
+        BuildThirdPose(out desiredPos, out desiredRot);
         ApplyPose(desiredPos, desiredRot, _thirdSharpness, false);
     }
 
-    private void BuildFirstPose(out Vector3 desiredPos, out Quaternion desiredRot)
+    private void BuildThirdPose(out Vector3 desiredPos, out Quaternion desiredRot)
     {
         desiredPos = _target.position + (_target.rotation * _thirdOffset);
 
