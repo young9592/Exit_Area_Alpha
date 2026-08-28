@@ -16,6 +16,9 @@ public partial class BasicCamera : MonoBehaviour
     [Header("시작 모드")]
     [SerializeField] private ECameraMode _startMode = ECameraMode.ThirdPerson;
 
+    [Header("반동 오프셋")]
+    [SerializeField] private float _recoilMultiple = 2f;
+
     [Header("디버그 연결 목록")]
     [SerializeField] private Transform _playerViewTr;
     [SerializeField] private Transform _viewTr;
@@ -48,11 +51,6 @@ public partial class BasicCamera : MonoBehaviour
         _camTr = _camera.transform;
 
         SetMode(_mode, true);
-    }
-
-    private void Update()
-    {
-        
     }
 
     private void LateUpdate()
@@ -112,6 +110,12 @@ public partial class BasicCamera : MonoBehaviour
         _camTr.rotation = Quaternion.Slerp(_camTr.rotation, desiredRot, t);
 
         _viewTr.position = _target.position + _target.forward * _offsetForward +_target.right * _offsetRight + _target.up * _offsetTop;
+    }
+
+    // Camera Recoil
+    public void AddRecoil(float rotX)
+    {
+        _camTr.rotation *= Quaternion.Euler(-rotX * _recoilMultiple, 0f, 0f);
     }
 
     private void OnDrawGizmos()

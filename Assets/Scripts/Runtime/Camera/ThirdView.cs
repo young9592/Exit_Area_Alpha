@@ -7,7 +7,7 @@ public partial class BasicCamera : MonoBehaviour
     [Header("3ÀÎÄª")]
     [SerializeField] private Vector3 _thirdOffset = new Vector3(0f, 2f, -2f);
     [SerializeField] private float _thirdLookAtHeight = 1.5f;
-    [SerializeField] private float _thirdSharpness = 18f;
+    [SerializeField] private float _thirdSharpness = 5f;
     #endregion
 
     private void InitThird(bool snap)

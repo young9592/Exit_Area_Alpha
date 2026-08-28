@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
-public class Player : MonoBehaviour
+public partial class Player : MonoBehaviour
 {
 
     #region Inspector
@@ -12,16 +12,6 @@ public class Player : MonoBehaviour
     [SerializeField] private Animator _animator;
     [SerializeField] private CharacterController _controller;
     [SerializeField] private RigBuilder _rig;
-
-    [Header("Move")]
-    [SerializeField] private float _runSpeed = 5.0f;
-
-    // 리지드 바디를 안쓰기 때문에 들어온 변수들
-    [Header("Jump")]
-    [SerializeField] private float _jumpHeight = 1.2f;
-    [SerializeField] private float _gravity = -9.81f;
-    // 캐릭터가 땅에 박혀있는걸 방지
-    [SerializeField] private float _groundStick = -2.0f;
 
     [Header("Animation Parameter")]
     [SerializeField] private string _paramSpeed = "fSpeed";
@@ -125,18 +115,14 @@ public class Player : MonoBehaviour
         #region StringToHash
         // 해시 준비
         _hashSpeed = Animator.StringToHash(_paramSpeed);
-
         _hashInputX = Animator.StringToHash(_paramInputX);
         _hashInputY = Animator.StringToHash(_paramInputY);
-
         _hashHandState = Animator.StringToHash(_paramHandState);
         _hashFire = Animator.StringToHash(_paramFire);
         _hashFireDelay = Animator.StringToHash(_paramFireDelay);
         _hashReload = Animator.StringToHash(_paramReload);
-
         _hashJump = Animator.StringToHash(_paramJump);
         _hashLand = Animator.StringToHash(_paramLand);
-
         #endregion
 
         _rig.enabled = false;
@@ -211,7 +197,6 @@ public class Player : MonoBehaviour
 
         return jumpd;
     }
-
     // 플레이어 회전 마우스로 설계
     private void MouseRotate()
     {
@@ -317,50 +302,47 @@ public class Player : MonoBehaviour
     {
         if (Input.GetKeyDown(_keySlot01))
         {
-            if (_weaponManager.SelectSlot(0, out WeaponManager.HandType type))
+            if (_weaponManager.SelectSlot(0, out Weapon.HandType type))
             {
                 // 슬롯 0번
-                _rig.enabled = type != WeaponManager.HandType.None;
+                _rig.enabled = type != Weapon.HandType.None;
                 _animator.SetInteger(_hashHandState, (int)type);
             }
         }
         else if (Input.GetKeyDown(_keySlot02))
         {
-            if (_weaponManager.SelectSlot(1, out WeaponManager.HandType type))
+            if (_weaponManager.SelectSlot(1, out Weapon.HandType type))
             {
                 // 슬롯 1번
-                _rig.enabled = type != WeaponManager.HandType.None;
+                _rig.enabled = type != Weapon.HandType.None;
                 _animator.SetInteger(_hashHandState, (int)type);
             }
         }
         else if (Input.GetKeyDown(_keySlot03))
         {
-            if (_weaponManager.SelectSlot(2, out WeaponManager.HandType type))
+            if (_weaponManager.SelectSlot(2, out Weapon.HandType type))
             {
                 // 슬롯 2번
-                _rig.enabled = type != WeaponManager.HandType.None;
+                _rig.enabled = type != Weapon.HandType.None;
                 _animator.SetInteger(_hashHandState, (int)type);
             }
         }
     }
-
     // 초기 0번 슬롯 무기 착용
     private void InitSwap()
     {
-        if (_weaponManager.SelectSlot(0, out WeaponManager.HandType type))
+        if (_weaponManager.SelectSlot(0, out Weapon.HandType type))
         {
             // 슬롯 0번
-            _rig.enabled = type != WeaponManager.HandType.None;
+            _rig.enabled = type != Weapon.HandType.None;
             _animator.SetInteger(_hashHandState, (int)type);
         }
     }
-
     // 발사 및 재장전 쿨타임 끝
     public void SuccessFireDelay()
     {
         _animator.SetBool(_hashFireDelay, false);
     }
-
     public void SuccessReload()
     {
         _rig.enabled = true;
