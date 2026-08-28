@@ -131,6 +131,9 @@ public partial class Player : MonoBehaviour
     private void Start()
     {
         InitSwap();
+
+        Cursor.visible = false; // 마우스 커서 없애기
+        Cursor.lockState = CursorLockMode.Locked; // 마우스 잠그기
     }
 
     private void Update()

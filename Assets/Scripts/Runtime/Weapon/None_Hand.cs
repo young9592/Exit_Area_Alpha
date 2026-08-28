@@ -10,7 +10,7 @@ public class None : Weapon
         _name = "맨손";
     }
 
-    public override void Fire()
+    public override void Fire(ref float curRecoil)
     {
         // 맨손입니다.
         return;

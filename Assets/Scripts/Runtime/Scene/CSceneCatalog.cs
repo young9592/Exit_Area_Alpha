@@ -4,8 +4,7 @@ using UnityEngine;
 public enum ESceneID
 {
     Title = 0,
-    Game = 1,
-    Result = 2
+    Game = 1
 }
 
 [Serializable]

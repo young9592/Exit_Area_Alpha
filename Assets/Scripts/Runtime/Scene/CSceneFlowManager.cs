@@ -29,6 +29,8 @@ public class CSceneFlowManager : MonoBehaviour
     private static CSceneFlowManager _instance;
     private int _cursorIndex = 0;
     private bool _isLoading = false;
+
+    private int _curTempSceneIndex = 0;
     #endregion
 
     private void Awake()
@@ -155,7 +157,7 @@ public class CSceneFlowManager : MonoBehaviour
         // 페이드 인
         if (_transitionUI != null)
         {
-            _transitionUI.SetLoadingText("로딩중...");
+            _transitionUI.SetLoadingText("Loading...");
 
             yield return _transitionUI.Co_FadeTo(1f, _fadeDuration);
         }
@@ -272,18 +274,18 @@ public class CSceneFlowManager : MonoBehaviour
 
     private void HandleHotkeys()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1))
+        if (Input.GetKeyDown(KeyCode.Z))
         {
             LoadScene(ESceneID.Title);
+            _curTempSceneIndex = 1;
         }
-        if (Input.GetKeyDown(KeyCode.Alpha2))
+        if (Input.GetKeyDown(KeyCode.X))
         {
             LoadScene(ESceneID.Game);
+            _curTempSceneIndex = 2;
         }
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            LoadScene(ESceneID.Result);
-        }
+
+        /*
         if (Input.GetKeyDown(KeyCode.R))
         {
             ReloadCurrent();
@@ -296,6 +298,8 @@ public class CSceneFlowManager : MonoBehaviour
         {
             LoadPrev();
         }
+
+        */
     }
 
     // 인스턴스 정리
@@ -305,5 +309,33 @@ public class CSceneFlowManager : MonoBehaviour
         {
             _instance = null;
         }
+    }
+
+    private void OnGUI()
+    {
+        string temp1 = "타이틀 조작키 | 메뉴 이동 : ↑, ↓ ";
+        string temp2 = "게임 조작키 | 이동및 시점 : WASD 와 Mouse / 무기 교체 : 1, 2, 3 / 사격 : Mouse0 / 재장전 : R / 점프 : Space";
+
+        // temp
+        GUIStyle style = new GUIStyle(GUI.skin.label);
+        style.alignment = TextAnchor.MiddleRight;
+        style.fontSize = 50;
+
+        GUI.Label(new Rect(0, 0, Screen.width, 120), " Key Z : 타이틀 화면 | Key X : 게임 화면", style);
+        style.fontSize = 40;
+
+        string finaltemp = "";
+
+        if (_curTempSceneIndex == 1)
+        {
+            finaltemp = temp1;
+        }
+        else if (_curTempSceneIndex == 2)
+        {
+            finaltemp = temp2;
+        }
+
+
+        GUI.Label(new Rect(0, Screen.height - 120, Screen.width, 120), finaltemp, style);
     }
 }

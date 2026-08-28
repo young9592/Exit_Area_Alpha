@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class M4A1 : Weapon
+public class M4A1 : Weapon, IPoolUse
 {
     private enum ReloadState
     {
@@ -14,14 +14,16 @@ public class M4A1 : Weapon
     private CTimer _reloadDelayTimer = new CTimer();
     private ReloadState _reloadState = ReloadState.None;
     private AudioClip _empty = null;
+    private ObjectPool _objectPool = null;
 
     private void Awake()
     {
         _id = 1;
         _name = "M4A1";
         _damage = 5f;
-        _fireDelay = 0.1f;
-        _recoil = 1f;
+        _fireDelay = 0.075f;
+        _recoil = 0.75f;
+        _recoilMin = 0f;
         _recoilMax = 15f;
         _ammo = 30;
         _magazine = 30;
@@ -65,6 +67,20 @@ public class M4A1 : Weapon
 
     private void Update()
     {
+        #region Null Check
+        if (_audioSource == null)
+        {
+            CPrint.Error($"{_name}.cs AudioSource Connect Fail.");
+            return;
+        }
+        if (_objectPool == null)
+        {
+            CPrint.Error($"{_name}.cs ObjectPool Connect Fail.");
+            return;
+
+        }
+        #endregion
+
         if (_isFire)
         {
             if (!_completeFire)
@@ -99,8 +115,16 @@ public class M4A1 : Weapon
             }
         }
     }
+    public void SetObjectPool(ObjectPool objectPool)
+    {
+        _objectPool = objectPool;
 
-    public override void Fire()
+        if (_objectPool != null)
+        {
+            CPrint.KV($"{_name}", "ObjectPool Connect.");
+        }
+    }
+    public override void Fire(ref float curRecoil)
     {
         if (_isFire)
         {
@@ -120,7 +144,9 @@ public class M4A1 : Weapon
 
         // 탄 소모 및 실제 탄 Object 생성
         _ammo -= 1;
-
+        _objectPool.SpawnBullet(_damage, curRecoil);
+        curRecoil += _recoil;
+        Mathf.Clamp(curRecoil, _recoilMin, _recoilMax);
 
         // 사운드 출력
         int randomSound = Random.Range(0, _fireClips.Count);

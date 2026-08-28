@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class AK47 : Weapon
+public class AK47 : Weapon, IPoolUse
 {
     private enum ReloadState
     {
@@ -16,14 +16,17 @@ public class AK47 : Weapon
     private CTimer _reloadDelayTimer = new CTimer();
     private ReloadState _reloadState = ReloadState.None;
     private AudioClip _empty = null;
+    private ObjectPool _objectPool = null;
+
 
     private void Awake()
     {
         _id = 2;
         _name = "AK47";
         _damage = 7f;
-        _fireDelay = 0.15f;
-        _recoil = 2.5f;
+        _fireDelay = 0.1f;
+        _recoil = 1.25f;
+        _recoilMin = 0.5f;
         _recoilMax = 15f;
         _ammo = 30;
         _magazine = 30;
@@ -67,6 +70,20 @@ public class AK47 : Weapon
 
     private void Update()
     {
+        #region Null Check
+        if (_audioSource == null)
+        {
+            CPrint.Error($"{_name}.cs AudioSource Connect Fail.");
+            return;
+        }
+        if(_objectPool == null)
+        {
+            CPrint.Error($"{_name}.cs ObjectPool Connect Fail.");
+            return;
+
+        }
+        #endregion
+
         if (_isFire)
         {
             if (!_completeFire)
@@ -101,8 +118,17 @@ public class AK47 : Weapon
             }
         }
     }
+    public void SetObjectPool(ObjectPool objectPool)
+    {
+        _objectPool = objectPool;
 
-    public override void Fire()
+        if (_objectPool != null)
+        {
+            CPrint.KV($"{_name}", "ObjectPool Connect.");
+        }
+
+    }
+    public override void Fire(ref float curRecoil)
     {
         if (_isFire)
         {
@@ -122,6 +148,9 @@ public class AK47 : Weapon
 
         // 탄 소모 및 실제 탄 Object 생성
         _ammo -= 1;
+        _objectPool.SpawnBullet(_damage, curRecoil);
+        curRecoil += _recoil;
+        Mathf.Clamp(curRecoil, _recoilMin, _recoilMax);
 
         // 사운드 출력
         int randomSound = Random.Range(0, _fireClips.Count);
