@@ -5,9 +5,14 @@ public partial class Player : MonoBehaviour
     [Header("Health")]
     [SerializeField] private float _health = 100;
     [SerializeField] private float _healthMax = 100;
+    
+    [Header("Stemina")]
+    [SerializeField] private float _stemina = 100;
+    [SerializeField] private float _steminaMax = 100;
 
     [Header("Move")]
-    [SerializeField] private float _runSpeed = 5.0f;
+    [SerializeField] private float _walkSpeed = 4.0f;
+    [SerializeField] private float _sprintMultiply = 1.5f;
 
     // 리지드 바디를 안쓰기 때문에 들어온 변수들
     [Header("Jump")]
@@ -19,23 +24,13 @@ public partial class Player : MonoBehaviour
     public void TakeDamage(float damage)
     {
         _health -= damage;
-        Clamp(0, _healthMax);
+        _health = Mathf.Clamp(_health, 0, _healthMax);
+        CPrint.Log($"플레이어는 {damage}의 데미지를 입었습니다.");
         
         if(_health == 0)
         {
             // game over
-        }
-    }
-
-    private void Clamp(float min, float max)
-    {
-        if (_health < min)
-        {
-            _health = min;
-        }
-        else if (_health > max)
-        {
-            _health = max;
+            CPrint.Warn("플레이어가 사망하였습니다.");
         }
     }
 }

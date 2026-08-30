@@ -4,7 +4,7 @@ public class Bullet : MonoBehaviour
 {
     #region Inspector
     [Header("Hit Effect")]
-    [SerializeField] private GameObject _hitGO;
+    [SerializeField] private HitPool _hitPoolManager = null;
 
     [Header("Bullet Status")]
     [SerializeField] private float _damage;
@@ -22,6 +22,9 @@ public class Bullet : MonoBehaviour
     [SerializeField] private string _tagBody = "Hit_Body";
     [SerializeField] private string _tagArm = "Hit_Arm";
     [SerializeField] private string _tagLeg = "Hit_Leg";
+
+    [Header("Debug Mode")]
+    [SerializeField] private bool _DebugMode = false;
     #endregion
 
     #region Property
@@ -29,8 +32,21 @@ public class Bullet : MonoBehaviour
     public float Damage => _damage;
     #endregion
 
+    // 첫 초기화
+    public void Initialize(HitPool hitPoolManager)
+    {
+        _hitPoolManager = hitPoolManager;
+    
+        if(_hitPoolManager == null)
+        {
+            CPrint.Warn("HitPoolManager Connect Fail.");
+            enabled = false;
+            return;
+        }
+    }
+
     // 추후 만약 헤드 데미지 증가가 있으면 수정가능
-    public void Init(float damage)
+    public void SetBullet(float damage)
     {
         _damage = damage;
     }
@@ -38,18 +54,29 @@ public class Bullet : MonoBehaviour
     private void Awake()
     {
         lineRenderer = GetComponent<LineRenderer>();
+
+        if (!_DebugMode)
+        {
+            lineRenderer.enabled = false;
+        }
     }
 
     private void OnEnable()
     {
-        lineRenderer.SetPosition(0, transform.position);
-        lineRenderer.SetPosition(1, transform.position + transform.forward * _maxDistance);
-        lineRenderer.enabled = true;
+        if (_DebugMode)
+        {
+            lineRenderer.SetPosition(0, transform.position);
+            lineRenderer.SetPosition(1, transform.position + transform.forward * _maxDistance);
+            lineRenderer.enabled = true;
+        }
     }
 
     private void OnDisable()
     {
-        lineRenderer.enabled = false;
+        if (_DebugMode)
+        {
+            lineRenderer.enabled = false;
+        }
     }
 
     private void Update()
@@ -72,7 +99,8 @@ public class Bullet : MonoBehaviour
                 return;
             }
 
-            GameObject go = Instantiate(_hitGO, hit.point, Quaternion.identity);
+            _hitPoolManager.SpawnHitEffect(hit.point);
+
 
             float multiply = 1f;
 

@@ -10,7 +10,7 @@ public class WeaponManager : MonoBehaviour
     [SerializeField] private Player _player;
     [SerializeField] private Inventory _inventory;
     [SerializeField] private BasicCamera _cameraManager;
-    [SerializeField] private ObjectPool _objectPool;
+    [SerializeField] private BulletPool _bulletPool;
     // 총기의 오브젝트
     [SerializeField] private List<GameObject> _weaponGo;
     // 왼손 총기 핸드가드 매칭 인스펙터
@@ -46,7 +46,7 @@ public class WeaponManager : MonoBehaviour
     {
         // 추후 무기 갯수에 따라서 count가 list랑 동일한지 체크해야합니다.
         #region Null Check
-        if (_inventory == null || _player == null || _cameraManager == null || _objectPool == null)
+        if (_inventory == null || _player == null || _cameraManager == null || _bulletPool == null)
         {
             CPrint.Error("WeaponManager.cs Null find.");
             enabled = false;
@@ -65,9 +65,9 @@ public class WeaponManager : MonoBehaviour
                 continue;
             }
 
-            if (_slots[i] is IPoolUse poolUse)
+            if (_slots[i] is IBulletPoolUse poolUse)
             {
-                poolUse.SetObjectPool(_objectPool);
+                poolUse.SetBulletObjectPool(_bulletPool);
             }
         }
     }
@@ -75,7 +75,7 @@ public class WeaponManager : MonoBehaviour
     private void Update()
     {
         #region Null Check
-        if (_inventory == null || _player == null || _cameraManager == null || _objectPool == null)
+        if (_inventory == null || _player == null || _cameraManager == null || _bulletPool == null)
         {
             CPrint.Error("WeaponManager.cs Null find.");
             return;
@@ -186,9 +186,9 @@ public class WeaponManager : MonoBehaviour
     private void OnGUI()
     {
         // 크로스헤어
-        float crossHairWidth = 50f;
-        float crossHairHeight = 5f;
-        float subPush = 25;
+        float crossHairWidth = 30f;
+        float crossHairHeight = 4f;
+        float subPush = 8f;
         float recoilOffset = 10f;
 
         Texture2D greenTexture;

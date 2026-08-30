@@ -14,7 +14,7 @@ public partial class Player : MonoBehaviour
     [SerializeField] private RigBuilder _rig;
 
     [Header("Animation Parameter")]
-    [SerializeField] private string _paramSpeed = "fSpeed";
+    [SerializeField] private string _paramAnimationMoveSpeed = "fAniMoveSpeed";
     [SerializeField] private string _paramInputX = "fInputX";
     [SerializeField] private string _paramInputY = "fInputY";
 
@@ -27,10 +27,6 @@ public partial class Player : MonoBehaviour
     [SerializeField] private string _paramFire = "tFire";
     [SerializeField] private string _paramFireDelay = "bFireDelay";
     [SerializeField] private string _paramReload = "tReload";
-
-    // 보간값
-    [Header("Animator Tuning")]
-    [SerializeField] private float _speedDamp = 0.12f;
 
     [Header("Mouse")]
     [SerializeField] private Transform _cameraPivot;
@@ -53,6 +49,8 @@ public partial class Player : MonoBehaviour
 
     [SerializeField] private KeyCode _keyFire = KeyCode.Mouse0;
     [SerializeField] private KeyCode _keyReload = KeyCode.R;
+    [SerializeField] private KeyCode _keyJump = KeyCode.Space;
+    [SerializeField] private KeyCode _keySprint = KeyCode.LeftShift;
     #endregion
 
     #region Field
@@ -61,13 +59,15 @@ public partial class Player : MonoBehaviour
 
     // 현재 점프중인가?
     private bool _doJump;
-
+    
+    // 랜딩시 점프 쿨타임
+    private CTimer _jumpDelayTimer = new CTimer();
     // 마우스 이동
     private float _mouseX;
     private float _mouseY;
 
     // 해시변환
-    private int _hashSpeed;
+    private int _hashAnimationMoveSpeed;
     private int _hashJump;
     private int _hashLand;
     private int _hashInputX;
@@ -114,7 +114,7 @@ public partial class Player : MonoBehaviour
 
         #region StringToHash
         // 해시 준비
-        _hashSpeed = Animator.StringToHash(_paramSpeed);
+        _hashAnimationMoveSpeed = Animator.StringToHash(_paramAnimationMoveSpeed);
         _hashInputX = Animator.StringToHash(_paramInputX);
         _hashInputY = Animator.StringToHash(_paramInputY);
         _hashHandState = Animator.StringToHash(_paramHandState);
@@ -149,6 +149,12 @@ public partial class Player : MonoBehaviour
         }
         #endregion
 
+        // Timer
+        if (_jumpDelayTimer.GetCurrentTimerState)
+        {
+            _jumpDelayTimer.AddTimer();
+        }
+
         Move();
         Fire();
         Reload();
@@ -180,6 +186,7 @@ public partial class Player : MonoBehaviour
             {
                 _animator.SetTrigger(_hashLand);
                 _doJump = false;
+                _jumpDelayTimer.SetTimer(1f);
             }
 
             // 바닥에 붙어있을 때 y속도가 음수면 너무 떨어지지 않게 고정하고 싶습니다.
@@ -188,7 +195,7 @@ public partial class Player : MonoBehaviour
                 _verticalVel = _groundStick;
             }
 
-            if (jumpKeyDown)
+            if (jumpKeyDown && !_jumpDelayTimer.GetCurrentTimerState)
             {
                 _verticalVel = Mathf.Sqrt(_jumpHeight * -2.0f * _gravity);
                 jumpd = true;
@@ -243,14 +250,16 @@ public partial class Player : MonoBehaviour
         input = Vector3.ClampMagnitude(input.normalized, 1.0f);
 
         // 점프
-        bool jumpKeyDown = Input.GetKeyDown(KeyCode.Space);
+        bool jumpKeyDown = Input.GetKeyDown(_keyJump);
 
         // 2. 이동 방향 계산
         // 회전 + 애니메이션 처리도 고려함
         Vector3 moveDir = (input.sqrMagnitude > 0.0001f) ? BuildMoveDirection(input) : Vector3.zero;
 
+        
         // 3. 이동 속도
-        float speed = _runSpeed;
+        bool sprintKeyDown = Input.GetKey(_keySprint);
+        float speed = _walkSpeed * (sprintKeyDown ? _sprintMultiply : 1f);
 
         // 4. 점프
         // 업데이트에서 한번만 체크해서 넘긴다.
@@ -274,9 +283,9 @@ public partial class Player : MonoBehaviour
         MouseRotate();
 
         // 7. 파라미터 업데이트 수행
-        float speed01 = moveDir.magnitude * 0.5f;
+        float moveAnimationMultiple = (sprintKeyDown ?  1.5f : 1f);
 
-        _animator.SetFloat(_hashSpeed, speed01, _speedDamp, Time.deltaTime);
+        _animator.SetFloat(_hashAnimationMoveSpeed, moveAnimationMultiple);
 
     }
     private void Fire()

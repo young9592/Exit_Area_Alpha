@@ -8,10 +8,9 @@ public class CTimer
     #endregion
 
     #region Property
-    public bool ToggleTimer
+    public bool GetCurrentTimerState
     {
         get { return _onTimer; }
-        set { _onTimer = value; }
     }
 
     public float GetTime
@@ -26,6 +25,10 @@ public class CTimer
         _onTimer = true;
     }
 
+    public void OffTimer()
+    {
+        _onTimer = false;
+    }
     public bool AddTimer()
     {
 

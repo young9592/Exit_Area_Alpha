@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class M4A1 : Weapon, IPoolUse
+public class M4A1 : Weapon, IBulletPoolUse
 {
     private enum ReloadState
     {
@@ -14,7 +14,7 @@ public class M4A1 : Weapon, IPoolUse
     private CTimer _reloadDelayTimer = new CTimer();
     private ReloadState _reloadState = ReloadState.None;
     private AudioClip _empty = null;
-    private ObjectPool _objectPool = null;
+    private BulletPool _bulletObjectPool = null;
 
     private void Awake()
     {
@@ -73,7 +73,7 @@ public class M4A1 : Weapon, IPoolUse
             CPrint.Error($"{_name}.cs AudioSource Connect Fail.");
             return;
         }
-        if (_objectPool == null)
+        if (_bulletObjectPool == null)
         {
             CPrint.Error($"{_name}.cs ObjectPool Connect Fail.");
             return;
@@ -115,13 +115,13 @@ public class M4A1 : Weapon, IPoolUse
             }
         }
     }
-    public void SetObjectPool(ObjectPool objectPool)
+    public void SetBulletObjectPool(BulletPool bulletObjectPool)
     {
-        _objectPool = objectPool;
+        _bulletObjectPool = bulletObjectPool;
 
-        if (_objectPool != null)
+        if (_bulletObjectPool == null)
         {
-            CPrint.KV($"{_name}", "ObjectPool Connect.");
+            CPrint.KV($"{_name}", "ObjectPool Connect Fail.");
         }
     }
     public override void Fire(ref float curRecoil)
@@ -144,7 +144,7 @@ public class M4A1 : Weapon, IPoolUse
 
         // 藕 家葛 棺 角力 藕 Object 积己
         _ammo -= 1;
-        _objectPool.SpawnBullet(_damage, curRecoil);
+        _bulletObjectPool.SpawnBullet(_damage, curRecoil);
         curRecoil += _recoil;
         Mathf.Clamp(curRecoil, _recoilMin, _recoilMax);
 
