@@ -14,7 +14,7 @@ public class Hit : MonoBehaviour
 
     private void Reset()
     {
-        _rb = GetComponent<Rigidbody>();   
+        _rb = GetComponent<Rigidbody>();
     }
     public void Initialize(float damage)
     {
@@ -22,7 +22,7 @@ public class Hit : MonoBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
-        int layerMask = LayerMask.GetMask(_targetLayerName);
+        int layerMask = LayerMask.NameToLayer(_targetLayerName);
 
         if (other.gameObject.layer == layerMask)
         {

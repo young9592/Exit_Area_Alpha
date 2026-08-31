@@ -40,6 +40,7 @@ public class WeaponManager : MonoBehaviour
     // 플레이어 반동 시각적 효과
     #region Property
     public float GetCurentFireArmRecoil => _slots[_curSlotIdx].Recoil;
+    public float CurRecoil => _curRecoil;
     #endregion
 
     private void Awake()
@@ -181,31 +182,5 @@ public class WeaponManager : MonoBehaviour
 
         _curSlotIdx = index;
         return true;
-    }
-
-    private void OnGUI()
-    {
-        // 크로스헤어
-        float crossHairWidth = 30f;
-        float crossHairHeight = 4f;
-        float subPush = 8f;
-        float recoilOffset = 10f;
-
-        Texture2D greenTexture;
-        Color color = new Color(0, 1f, 0, 0.2f);
-        greenTexture = new Texture2D(1, 1);
-        greenTexture.SetPixel(0, 0, color);
-        greenTexture.Apply();
-
-        GUIStyle box = new GUIStyle(GUI.skin.box);
-        box.normal.background = greenTexture;
-
-        GUI.Box(new Rect((Screen.width - crossHairHeight) * 0.5f, (Screen.height - crossHairHeight) * 0.5f, crossHairHeight, crossHairHeight), "", box);
-
-        GUI.Box(new Rect((Screen.width * 0.5f - crossHairWidth - subPush) - _curRecoil * recoilOffset, (Screen.height - crossHairHeight) * 0.5f, crossHairWidth, crossHairHeight), "", box);
-        GUI.Box(new Rect((Screen.width * 0.5f + subPush) + _curRecoil * recoilOffset, (Screen.height - crossHairHeight) * 0.5f, crossHairWidth, crossHairHeight), "", box);
-
-        GUI.Box(new Rect((Screen.width - crossHairHeight) * 0.5f, (Screen.height * 0.5f - crossHairWidth - subPush) - _curRecoil * recoilOffset, crossHairHeight, crossHairWidth), "", box);
-        GUI.Box(new Rect((Screen.width - crossHairHeight) * 0.5f, (Screen.height * 0.5f + subPush) + _curRecoil * recoilOffset, crossHairHeight, crossHairWidth), "", box);
     }
 }

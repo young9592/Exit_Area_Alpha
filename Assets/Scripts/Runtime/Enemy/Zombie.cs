@@ -1,5 +1,7 @@
 using System;
 using UnityEngine;
+using static UnityEditor.PlayerSettings;
+using static UnityEngine.GraphicsBuffer;
 
 public class Zombie : MonoBehaviour
 {
@@ -21,17 +23,29 @@ public class Zombie : MonoBehaviour
     [Header("Zombie Status")]
     [SerializeField] private float _health = 100f;
     [SerializeField] private float _healthMax = 100f;
+
     [SerializeField] private float _damage = 5f;
     [SerializeField] private float _ATKDelay = 3f;
-    [SerializeField] private float _ATKHitDelay = 0.5f;
-    [SerializeField] private float _moveTickSpeed = 0.3f;
-    [SerializeField] private float _moveSpeedMax = 3f;
-    [SerializeField] private float _detectDistance = 10f;
+    [SerializeField] private float _ATKHitDuration = 0.5f;
     [SerializeField] private float _attackDistance = 2f;
 
+    [SerializeField] private float _moveTickSpeed = 0.3f;
+    [SerializeField] private float _moveSpeedMax = 3f;
+
+    [SerializeField] private float _detectDistance = 10f;
+    [SerializeField] private float _detectDuration = 5f;
+
+    [SerializeField] private float _landingDelay = 1.5f;
+
+
+    [Header("RigidBody")]
+    [SerializeField] private float _groundStick = -2.0f;
+
     [Header("Animation Parameter")]
-    [SerializeField] private string _paramAttack = "tAttack";
     [SerializeField] private string _paramSpeed = "fSpeed";
+    [SerializeField] private string _paramAttack = "tAttack";
+    [SerializeField] private string _paramFalling = "tFalling";
+    [SerializeField] private string _paramLand = "tLand";
     [SerializeField] private string _paramDead = "tDead";
 
     [Header("HitBox")]
@@ -53,11 +67,26 @@ public class Zombie : MonoBehaviour
     private State _curState = State.Idle;
     private float _curMoveSpeed = 0f;
 
-    private int _hashAttack;
+    private float _verticalVel = 0f;
+    private bool _isFalling = false;
+
     private int _hashSpeed;
+    private int _hashAttack;
+    private int _hashFalling;
+    private int _hashLand;
     private int _hashDead;
+
+    // 발각시 일정시간 추적 타이머
+    private CTimer _detectTimer = new CTimer();
+    // 공격 후 딜레이
     private CTimer _ATKDelayTimer = new CTimer();
+    // 공격 판정 충돌박스 삭제 시간
     private CTimer _ATKHitTimer = new CTimer();
+    // 랜딩 모션 타이머
+    private CTimer _landingTimer = new CTimer();
+    // 스탠딩 모션 타이머
+    private CTimer _StandUpTimer = new CTimer();
+    // 사망 시 오브젝트 삭제 시간
     private CTimer _deadTimer = new CTimer();
     #endregion
 
@@ -69,13 +98,16 @@ public class Zombie : MonoBehaviour
     }
     private void Awake()
     {
-        _hashAttack = Animator.StringToHash(_paramAttack);
         _hashSpeed = Animator.StringToHash(_paramSpeed);
+        _hashAttack = Animator.StringToHash(_paramAttack);
+        _hashFalling = Animator.StringToHash(_paramFalling);
+        _hashLand = Animator.StringToHash(_paramLand);
         _hashDead = Animator.StringToHash(_paramDead);
     }
 
     private void Update()
     {
+        #region Timers
         if (_deadTimer.GetCurrentTimerState)
         {
             if (_deadTimer.AddTimer())
@@ -83,7 +115,6 @@ public class Zombie : MonoBehaviour
                 this.gameObject.SetActive(false);
             }
         }
-
         if (_ATKHitTimer.GetCurrentTimerState)
         {
             if (_ATKHitTimer.AddTimer())
@@ -91,13 +122,27 @@ public class Zombie : MonoBehaviour
                 _ATKHitBox.SetActive(false);
             }
         }
-
         if (_ATKDelayTimer.GetCurrentTimerState)
         {
             _ATKDelayTimer.AddTimer();
         }
 
+        if (_detectTimer.GetCurrentTimerState)
+        {
+            _detectTimer.AddTimer();
+        }
 
+        if (_landingTimer.GetCurrentTimerState)
+        {
+            if (!_landingTimer.AddTimer())
+            {
+                return;
+            }
+
+        }
+        #endregion
+
+        CheckGrounded();
         ChangeState();
         UpdateState();
     }
@@ -109,38 +154,58 @@ public class Zombie : MonoBehaviour
         }
 
 
-        float distance = (transform.position - _playerTr.position).sqrMagnitude;
-        float dot = Vector3.Dot(transform.position, _playerTr.position);
+        Vector3 distanceVec = _playerTr.position - transform.position;
+        float distance = distanceVec.sqrMagnitude;
+        // 내적 : 정면 90도 체크
+        float dot = Vector3.Dot(transform.forward, distanceVec.normalized);
 
-        if (distance > _detectDistance * _detectDistance)
+        float detectDistanceSqr = _detectDistance * _detectDistance;
+        float attackDistanceSqr = _attackDistance * _attackDistance;
+
+        if (!_detectTimer.GetCurrentTimerState)
         {
-            _curState = State.Idle;
-
-        }
-        else if (distance <= _detectDistance * _detectDistance && distance > _attackDistance * _attackDistance)
-        {
-            if (!_ATKDelayTimer.GetCurrentTimerState)
-            {
-                _curState = State.Trace;
-
-            }
-            else
+            if (distance > detectDistanceSqr)
             {
                 _curState = State.Idle;
+
+            }
+            // 발각 거리에 들어왔을 때
+            else if (distance <= detectDistanceSqr)
+            {
+                if (dot < Mathf.Cos(45f * Mathf.Deg2Rad))
+                {
+                    return;
+                }
+                // 발견 타이머 작동
+                _detectTimer.SetTimer(_detectDuration);
             }
         }
-        else if (distance <= _attackDistance * _attackDistance)
+        else if (_detectTimer.GetCurrentTimerState)
         {
-            if (!_ATKDelayTimer.GetCurrentTimerState)
+            if (distance > attackDistanceSqr)
             {
-                _curState = State.Attack;
 
+                if (!_ATKDelayTimer.GetCurrentTimerState)
+                {
+                    _curState = State.Trace;
+                }
+                else
+                {
+                    _curState = State.Idle;
+                }
             }
-            else
+            else if (distance <= attackDistanceSqr)
             {
-                _curState = State.Idle;
+                if (!_ATKDelayTimer.GetCurrentTimerState)
+                {
+                    _curState = State.Attack;
+                    _detectTimer.SetTimer(_detectDuration);
+                }
+                else
+                {
+                    _curState = State.Idle;
+                }
             }
-
         }
     }
 
@@ -162,7 +227,7 @@ public class Zombie : MonoBehaviour
         }
         float clamp01 = _curMoveSpeed / _moveSpeedMax;
 
-        if (clamp01 < 0.001)
+        if (clamp01 < 0.01)
         {
             clamp01 = 0;
         }
@@ -171,9 +236,7 @@ public class Zombie : MonoBehaviour
     }
     private void Idle()
     {
-        _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, 0, 1f - Mathf.Exp(-15 * Time.deltaTime));
-
-
+        _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, 0, 1f - Mathf.Exp(-20 * Time.deltaTime));
         _curMoveSpeed = Mathf.Clamp(_curMoveSpeed, 0, _moveSpeedMax);
     }
 
@@ -182,42 +245,82 @@ public class Zombie : MonoBehaviour
         Vector3 moveDir = (_playerTr.position - transform.position).normalized;
 
         TargetMove(moveDir);
-        TargetRotate(moveDir);
+        TargetRotate(moveDir, true);
     }
 
     private void Attack()
     {
+        Vector3 moveDir = (_playerTr.position - transform.position).normalized;
+        TargetRotate(moveDir, false);
+
         Hit hitScript = _ATKHitBox.GetComponent<Hit>();
         hitScript.Initialize(_damage);
 
         _ATKHitBox.SetActive(true);
-        _ATKHitTimer.SetTimer(_ATKHitDelay);
         _ATKDelayTimer.SetTimer(_ATKDelay);
+        _ATKHitTimer.SetTimer(_ATKHitDuration);
         _animator.SetTrigger(_hashAttack);
     }
 
     private void TargetMove(Vector3 moveDir)
     {
-        _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, _moveSpeedMax, 1f - Mathf.Exp(-5 * Time.deltaTime));
+        _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, _moveSpeedMax, 1f - Mathf.Exp(-2 * Time.deltaTime));
         _curMoveSpeed = Mathf.Clamp(_curMoveSpeed, 0, _moveSpeedMax);
 
         Vector3 velocity = moveDir * _curMoveSpeed;
-        velocity.y = 0f;
+        velocity.y = _verticalVel;
         _controller.Move(velocity * Time.deltaTime);
     }
-    private void TargetRotate(Vector3 moveDir)
+    private void TargetRotate(Vector3 moveDir, bool isLerp)
     {
+        // y축이 차이닐 시 기울어짐.
+        moveDir.y = 0f;
         Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
+        
+        if (isLerp)
+        {
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 1f - Mathf.Exp(-5 * Time.deltaTime));
+        }
+        else
+        {
+            transform.rotation = targetRot;
+        }
+    }
 
-        transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 1f - Mathf.Exp(-5 * Time.deltaTime));
+    // 
+    private void CheckGrounded()
+    {
+        if (_controller.isGrounded)
+        {
+            if (_isFalling)
+            {
+                _isFalling = false;
+                _animator.SetTrigger(_hashLand);
+                _landingTimer.SetTimer(_landingDelay);
+            }
+
+            if (_verticalVel < 0.0f)
+            {
+                _verticalVel = _groundStick;
+            }
+        }
+        else
+        {
+            if (!_isFalling && _controller.velocity.y <= -3f)
+            {
+                _isFalling = true;
+                _animator.SetTrigger(_hashFalling);
+            }
+        }
     }
 
     public void TakeDamage(float damage)
     {
         CPrint.Log($"좀비는 {damage}데미지를 입었습니다.");
         _health -= damage;
-
         Mathf.Clamp(_health, 0, _healthMax);
+        // 추적 상태로 전환
+        _detectTimer.SetTimer(_detectDuration);
 
         if (_health <= 0)
         {
@@ -243,5 +346,23 @@ public class Zombie : MonoBehaviour
         _hitBoxHandR.enabled = toggle;
         _hitBoxLegL.enabled = toggle;
         _hitBoxLegR.enabled = toggle;
+    }
+
+
+    private void OnDrawGizmos()
+    {
+        // 씬 확인용
+        Vector3 zombiePos = transform.position;
+        Vector3 targetPos = _playerTr.position;
+        Vector3 forwardDir = transform.forward;
+        Vector3 distanceVec = targetPos - zombiePos;
+        Vector3 targetDir = distanceVec.normalized;
+
+        Gizmos.color = Color.green;
+        float halfAngle = 45f;
+        Vector3 leftDir = Quaternion.Euler(0, -halfAngle, 0) * forwardDir;
+        Vector3 rightDir = Quaternion.Euler(0, halfAngle, 0) * forwardDir;
+        Gizmos.DrawRay(zombiePos, leftDir * 3f);
+        Gizmos.DrawRay(zombiePos, rightDir * 3f);
     }
 }

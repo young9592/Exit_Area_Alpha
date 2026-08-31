@@ -3,12 +3,15 @@ using UnityEngine;
 
 public class Inventory : MonoBehaviour
 {
-    private int _gold = 0;
-    private int _AmmoHG = 150;
-    private int _AmmoHGMax = 150;
-    private int _AmmoAR = 300;
-    private int _AmmoARMax = 300;
+    #region Inspector
+    // private Item _itemSlot = new Item[15];
 
+    [SerializeField] private int _gold = 0;
+    [SerializeField] private int _AmmoHG = 150;
+    [SerializeField] private int _AmmoHGMax = 150;
+    [SerializeField] private int _AmmoAR = 300;
+    [SerializeField] private int _AmmoARMax = 300;
+    #endregion
     public void ReloaingAmmo(Weapon.WeaponType weaponType, int requireAmmo, out int returnAmmo)
     {
         returnAmmo = 0;

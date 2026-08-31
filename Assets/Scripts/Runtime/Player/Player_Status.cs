@@ -27,10 +27,14 @@ public partial class Player : MonoBehaviour
         _health = Mathf.Clamp(_health, 0, _healthMax);
         CPrint.Log($"플레이어는 {damage}의 데미지를 입었습니다.");
         
-        if(_health == 0)
+        if(_health == 0 && !_isDead)
         {
             // game over
             CPrint.Warn("플레이어가 사망하였습니다.");
+            _animator.SetTrigger(_hashDead);
+            _controller.enabled = false;
+            _rig.enabled = false;
+            _isDead = true;
         }
     }
 }

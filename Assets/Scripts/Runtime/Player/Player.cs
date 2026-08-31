@@ -20,13 +20,13 @@ public partial class Player : MonoBehaviour
 
     [SerializeField] private string _paramJump = "tJump";
     [SerializeField] private string _paramLand = "tLand";
-    [SerializeField] private string _paramJumpX = "fJumpX";
-    [SerializeField] private string _paramJumpY = "fJumpY";
 
     [SerializeField] private string _paramHandState = "nHandState";
     [SerializeField] private string _paramFire = "tFire";
     [SerializeField] private string _paramFireDelay = "bFireDelay";
     [SerializeField] private string _paramReload = "tReload";
+
+    [SerializeField] private string _paramDead = "tDead";
 
     [Header("Mouse")]
     [SerializeField] private Transform _cameraPivot;
@@ -59,6 +59,9 @@ public partial class Player : MonoBehaviour
 
     // 현재 점프중인가?
     private bool _doJump;
+
+    // 현재 사망 상태인가?
+    private bool _isDead;
     
     // 랜딩시 점프 쿨타임
     private CTimer _jumpDelayTimer = new CTimer();
@@ -76,6 +79,7 @@ public partial class Player : MonoBehaviour
     private int _hashFire;
     private int _hashFireDelay;
     private int _hashReload;
+    private int _hashDead;
     #endregion
 
     // 커스텀 함수 아님
@@ -123,6 +127,7 @@ public partial class Player : MonoBehaviour
         _hashReload = Animator.StringToHash(_paramReload);
         _hashJump = Animator.StringToHash(_paramJump);
         _hashLand = Animator.StringToHash(_paramLand);
+        _hashDead = Animator.StringToHash(_paramDead);
         #endregion
 
         _rig.enabled = false;
@@ -131,9 +136,6 @@ public partial class Player : MonoBehaviour
     private void Start()
     {
         InitSwap();
-
-        Cursor.visible = false; // 마우스 커서 없애기
-        Cursor.lockState = CursorLockMode.Locked; // 마우스 잠그기
     }
 
     private void Update()
@@ -148,6 +150,12 @@ public partial class Player : MonoBehaviour
             return;
         }
         #endregion
+
+        // 사망
+        if (_isDead)
+        {
+            return;
+        }
 
         // Timer
         if (_jumpDelayTimer.GetCurrentTimerState)
