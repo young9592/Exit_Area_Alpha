@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class HitPool : ObjectPool
 {
-    // Hit Effect
+    // 피격 이펙트 구현
     public void SpawnHitEffect(Vector3 hitPos, float lifeTime = 1f)
     {
         GameObject HitPrefab = GetPrefabFromPool();

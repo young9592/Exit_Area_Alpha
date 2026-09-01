@@ -1,8 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System;
 
-public class AK47 : Weapon, IBulletPoolUse
+public class M4A1 : Weapon, IUseBulletPool
 {
     private enum ReloadState
     {
@@ -18,15 +17,14 @@ public class AK47 : Weapon, IBulletPoolUse
     private AudioClip _empty = null;
     private BulletPool _bulletObjectPool = null;
 
-
     private void Awake()
     {
-        _id = 2;
-        _name = "AK47";
-        _damage = 7f;
-        _fireDelay = 0.1f;
-        _recoil = 1.25f;
-        _recoilMin = 0.5f;
+        _id = 1;
+        _name = "M4A1";
+        _damage = 5f;
+        _fireDelay = 0.075f;
+        _recoil = 0.75f;
+        _recoilMin = 0f;
         _recoilMax = 15f;
         _ammo = 30;
         _magazine = 30;
@@ -38,18 +36,18 @@ public class AK47 : Weapon, IBulletPoolUse
 
         _audioSource = GetComponentInParent<AudioSource>();
 
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire01"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire02"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire03"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire04"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire05"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire01"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire02"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire03"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire04"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire05"));
 
         _reloadDelays.Add(1f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload01"));
-        _reloadDelays.Add(1f);                                   
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload02"));
-        _reloadDelays.Add(1.08f);                                
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload03"));
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload01"));
+        _reloadDelays.Add(1f);
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload02"));
+        _reloadDelays.Add(1.08f);
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload03"));
 
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
 
@@ -76,7 +74,7 @@ public class AK47 : Weapon, IBulletPoolUse
             CPrint.Error($"{_name}.cs AudioSource Connect Fail.");
             return;
         }
-        if(_bulletObjectPool == null)
+        if (_bulletObjectPool == null)
         {
             CPrint.Error($"{_name}.cs ObjectPool Connect Fail.");
             return;
@@ -118,13 +116,16 @@ public class AK47 : Weapon, IBulletPoolUse
             }
         }
     }
+
     public void SetBulletObjectPool(BulletPool bulletObjectPool)
     {
         _bulletObjectPool = bulletObjectPool;
 
         if (_bulletObjectPool == null)
         {
-            CPrint.KV($"{_name}", "ObjectPool Connect Fail.");
+            CPrint.Error($"{_name}.cs ObjectPool Connect Fail.");
+            enabled = false;
+            return;
         }
     }
     public override void Fire(ref float curRecoil)
@@ -152,9 +153,14 @@ public class AK47 : Weapon, IBulletPoolUse
         Mathf.Clamp(curRecoil, _recoilMin, _recoilMax);
 
         // 사운드 출력
-        int randomSound = Random.Range(0, _fireClips.Count);
+        int randomSound = UnityEngine.Random.Range(0, _fireClips.Count);
         _audioSource.PlayOneShot(_fireClips[randomSound]);
         _fireDelayTimer.SetTimer(_fireDelay);
+
+        CallMuzzleFlash(ID, _recoil);
+
+        CallSetAmmo(_weaponType, _ammo);
+
     }
 
     public override void Reload(Inventory inventory)
@@ -164,9 +170,10 @@ public class AK47 : Weapon, IBulletPoolUse
             return;
         }
 
-        inventory.ReloaingAmmo(_weaponType, _magazine, out int returnAmmo);
+        inventory.ReloadAmmo(_weaponType, _ammo, _magazine, out int returnAmmo);
         _returnAmmo = returnAmmo;
 
+        // 인벤토리 탄약 없음
         if (_returnAmmo == 0)
         {
             return;
@@ -183,8 +190,6 @@ public class AK47 : Weapon, IBulletPoolUse
         _audioSource.clip = _reloadClips[(int)_reloadState];
         _audioSource.Play();
         _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
-
-        CPrint.Log("탄창 드롭");
     }
 
     private void Insert()
@@ -193,8 +198,6 @@ public class AK47 : Weapon, IBulletPoolUse
         _audioSource.clip = _reloadClips[(int)_reloadState];
         _audioSource.Play();
         _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
-
-        CPrint.Log("탄창 삽입");
     }
 
     private void Bolt()
@@ -203,8 +206,6 @@ public class AK47 : Weapon, IBulletPoolUse
         _audioSource.clip = _reloadClips[(int)_reloadState];
         _audioSource.Play();
         _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
-
-        CPrint.Log("볼트 당기기");
     }
 
     private void Done()
@@ -212,8 +213,8 @@ public class AK47 : Weapon, IBulletPoolUse
         _isReload = false;
         _completeReload = true;
         _reloadState = ReloadState.None;
-        _ammo = _returnAmmo;
+        _ammo += _returnAmmo;
 
-        CPrint.Log($"재장전 완료 [현재 탄약] : {_ammo}");
+        CallSetAmmo(_weaponType, _ammo);
     }
 }

@@ -2,6 +2,7 @@ using UnityEngine;
 
 public partial class Player : MonoBehaviour
 {
+    #region Inspector
     [Header("Health")]
     [SerializeField] private float _health = 100;
     [SerializeField] private float _healthMax = 100;
@@ -9,6 +10,7 @@ public partial class Player : MonoBehaviour
     [Header("Stemina")]
     [SerializeField] private float _stemina = 100;
     [SerializeField] private float _steminaMax = 100;
+    [SerializeField] private float _steminaConsume = 1f;
 
     [Header("Move")]
     [SerializeField] private float _walkSpeed = 4.0f;
@@ -20,21 +22,12 @@ public partial class Player : MonoBehaviour
     [SerializeField] private float _gravity = -9.81f;
     // 캐릭터가 땅에 박혀있는걸 방지
     [SerializeField] private float _groundStick = -2.0f;
+    #endregion
 
-    public void TakeDamage(float damage)
-    {
-        _health -= damage;
-        _health = Mathf.Clamp(_health, 0, _healthMax);
-        CPrint.Log($"플레이어는 {damage}의 데미지를 입었습니다.");
-        
-        if(_health == 0 && !_isDead)
-        {
-            // game over
-            CPrint.Warn("플레이어가 사망하였습니다.");
-            _animator.SetTrigger(_hashDead);
-            _controller.enabled = false;
-            _rig.enabled = false;
-            _isDead = true;
-        }
-    }
+    #region Property
+    public float Health => _health;
+    public float HealthMax => _healthMax;
+    public float Stemina => _stemina;
+    public float SteminaMax => _steminaMax;
+    #endregion
 }

@@ -1,4 +1,3 @@
-using System.Reflection;
 using UnityEngine;
 
 public class Inventory : MonoBehaviour
@@ -6,15 +5,22 @@ public class Inventory : MonoBehaviour
     #region Inspector
     // private Item _itemSlot = new Item[15];
 
-    [SerializeField] private int _gold = 0;
-    [SerializeField] private int _AmmoHG = 150;
-    [SerializeField] private int _AmmoHGMax = 150;
-    [SerializeField] private int _AmmoAR = 300;
-    [SerializeField] private int _AmmoARMax = 300;
+    [SerializeField] private int _noneType = 0;
+    [SerializeField] private int _arAmmo = 300;
+    [SerializeField] private int _arAmmoMax = 300;
     #endregion
-    public void ReloaingAmmo(Weapon.WeaponType weaponType, int requireAmmo, out int returnAmmo)
+
+    #region Property
+    public int NoneType => _noneType;
+    public int AmmoAR => _arAmmo;
+    #endregion
+
+    // 부족한 총알만큼 받아오기
+    public void ReloadAmmo(Weapon.WeaponType weaponType, int curAmmo, int magazine, out int returnAmmo)
     {
         returnAmmo = 0;
+
+        int requireAmmo = magazine - curAmmo;
 
         switch (weaponType)
         {
@@ -23,19 +29,19 @@ public class Inventory : MonoBehaviour
             case Weapon.WeaponType.HandGun:
                 break;
             case Weapon.WeaponType.Rifle:
-                if (_AmmoAR == 0)
+                if (_arAmmo == 0)
                 {
                     returnAmmo = 0;
                 }
-                else if (_AmmoAR >= requireAmmo)
+                else if (_arAmmo >= requireAmmo)
                 {
                     returnAmmo = requireAmmo;
-                    _AmmoAR -= requireAmmo;
+                    _arAmmo -= requireAmmo;
                 }
-                else if (_AmmoAR < requireAmmo)
+                else if (_arAmmo < requireAmmo)
                 {
-                    returnAmmo = _AmmoAR;
-                    _AmmoAR = 0;
+                    returnAmmo = _arAmmo;
+                    _arAmmo = 0;
                 }
                 break;
             case Weapon.WeaponType.Shotgun:

@@ -1,11 +1,7 @@
-using System;
 using UnityEngine;
-using static UnityEditor.PlayerSettings;
-using static UnityEngine.GraphicsBuffer;
 
 public class Zombie : MonoBehaviour
 {
-    [Flags]
     public enum State
     {
         Idle,
@@ -29,11 +25,11 @@ public class Zombie : MonoBehaviour
     [SerializeField] private float _ATKHitDuration = 0.5f;
     [SerializeField] private float _attackDistance = 2f;
 
-    [SerializeField] private float _moveTickSpeed = 0.3f;
+
     [SerializeField] private float _moveSpeedMax = 3f;
 
     [SerializeField] private float _detectDistance = 10f;
-    [SerializeField] private float _detectDuration = 5f;
+    [SerializeField] private float _detectDuration = 10f;
 
     [SerializeField] private float _landingDelay = 1.5f;
 
@@ -84,8 +80,6 @@ public class Zombie : MonoBehaviour
     private CTimer _ATKHitTimer = new CTimer();
     // 랜딩 모션 타이머
     private CTimer _landingTimer = new CTimer();
-    // 스탠딩 모션 타이머
-    private CTimer _StandUpTimer = new CTimer();
     // 사망 시 오브젝트 삭제 시간
     private CTimer _deadTimer = new CTimer();
     #endregion
@@ -98,13 +92,14 @@ public class Zombie : MonoBehaviour
     }
     private void Awake()
     {
+        #region StringToHash
         _hashSpeed = Animator.StringToHash(_paramSpeed);
         _hashAttack = Animator.StringToHash(_paramAttack);
         _hashFalling = Animator.StringToHash(_paramFalling);
         _hashLand = Animator.StringToHash(_paramLand);
         _hashDead = Animator.StringToHash(_paramDead);
+        #endregion
     }
-
     private void Update()
     {
         #region Timers
@@ -208,7 +203,6 @@ public class Zombie : MonoBehaviour
             }
         }
     }
-
     private void UpdateState()
     {
         switch (_curState)
@@ -239,7 +233,6 @@ public class Zombie : MonoBehaviour
         _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, 0, 1f - Mathf.Exp(-20 * Time.deltaTime));
         _curMoveSpeed = Mathf.Clamp(_curMoveSpeed, 0, _moveSpeedMax);
     }
-
     private void Trace()
     {
         Vector3 moveDir = (_playerTr.position - transform.position).normalized;
@@ -247,7 +240,6 @@ public class Zombie : MonoBehaviour
         TargetMove(moveDir);
         TargetRotate(moveDir, true);
     }
-
     private void Attack()
     {
         Vector3 moveDir = (_playerTr.position - transform.position).normalized;
@@ -261,7 +253,6 @@ public class Zombie : MonoBehaviour
         _ATKHitTimer.SetTimer(_ATKHitDuration);
         _animator.SetTrigger(_hashAttack);
     }
-
     private void TargetMove(Vector3 moveDir)
     {
         _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, _moveSpeedMax, 1f - Mathf.Exp(-2 * Time.deltaTime));
@@ -279,15 +270,16 @@ public class Zombie : MonoBehaviour
         
         if (isLerp)
         {
+            // 부드럽게 회전
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, 1f - Mathf.Exp(-5 * Time.deltaTime));
         }
         else
         {
+            // 즉시 해당 방향으로 회전
             transform.rotation = targetRot;
         }
     }
-
-    // 
+    // 떨어지는 중인지 체크
     private void CheckGrounded()
     {
         if (_controller.isGrounded)
@@ -313,7 +305,6 @@ public class Zombie : MonoBehaviour
             }
         }
     }
-
     public void TakeDamage(float damage)
     {
         CPrint.Log($"좀비는 {damage}데미지를 입었습니다.");
@@ -332,7 +323,6 @@ public class Zombie : MonoBehaviour
             _deadTimer.SetTimer(3f);
         }
     }
-
     private void ToggleCollider(bool toggle)
     {
         _controller.enabled = toggle;
@@ -347,8 +337,6 @@ public class Zombie : MonoBehaviour
         _hitBoxLegL.enabled = toggle;
         _hitBoxLegR.enabled = toggle;
     }
-
-
     private void OnDrawGizmos()
     {
         // 씬 확인용

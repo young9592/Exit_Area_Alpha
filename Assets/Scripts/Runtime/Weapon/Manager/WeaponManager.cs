@@ -1,13 +1,20 @@
 using UnityEngine;
 using System.Collections.Generic;
 using UnityEngine.Animations.Rigging;
+using System;
 
 public class WeaponManager : MonoBehaviour
 {
+    // 무기 변경 이벤트 핸들러
+    public event Action<int, Weapon> OnSetWeapon;
+
+    // 무기 발사 및 재장전 핸들러
+    public event Action OnFire;
+    public event Action OnReload;
 
     #region Inspector
     [Header("참조")]
-    [SerializeField] private Player _player;
+
     [SerializeField] private Inventory _inventory;
     [SerializeField] private BasicCamera _cameraManager;
     [SerializeField] private BulletPool _bulletPool;
@@ -37,9 +44,10 @@ public class WeaponManager : MonoBehaviour
     private int _curSlotIdx = 0;
     #endregion
 
-    // 플레이어 반동 시각적 효과
     #region Property
-    public float GetCurentFireArmRecoil => _slots[_curSlotIdx].Recoil;
+    public Weapon CurrentSlot => _slots[_curSlotIdx];
+    public int CurrentSlotID => _slots[_curSlotIdx].ID;
+    public int CurrentSlotAmmo => _slots[_curSlotIdx].Ammo;
     public float CurRecoil => _curRecoil;
     #endregion
 
@@ -47,7 +55,7 @@ public class WeaponManager : MonoBehaviour
     {
         // 추후 무기 갯수에 따라서 count가 list랑 동일한지 체크해야합니다.
         #region Null Check
-        if (_inventory == null || _player == null || _cameraManager == null || _bulletPool == null)
+        if (_inventory == null || _cameraManager == null || _bulletPool == null)
         {
             CPrint.Error("WeaponManager.cs Null find.");
             enabled = false;
@@ -66,9 +74,19 @@ public class WeaponManager : MonoBehaviour
                 continue;
             }
 
-            if (_slots[i] is IBulletPoolUse poolUse)
+            // 무기 스크립트가 해당 기능을 필요로 하는지 체크
+            if (_slots[i] is IUseBulletPool usePoolManager)
             {
-                poolUse.SetBulletObjectPool(_bulletPool);
+                usePoolManager.SetBulletObjectPool(_bulletPool);
+            }
+            if (_slots[i] is M4A1 m4a1)
+            {
+                m4a1.OnMuzzleFlash += OnMuzzleFlash;
+            }
+
+            if (_slots[i] is AK47 ak47)
+            {
+                ak47.OnMuzzleFlash += OnMuzzleFlash;
             }
         }
     }
@@ -76,7 +94,7 @@ public class WeaponManager : MonoBehaviour
     private void Update()
     {
         #region Null Check
-        if (_inventory == null || _player == null || _cameraManager == null || _bulletPool == null)
+        if (_inventory == null || _cameraManager == null || _bulletPool == null)
         {
             CPrint.Error("WeaponManager.cs Null find.");
             return;
@@ -88,7 +106,7 @@ public class WeaponManager : MonoBehaviour
         {
             if (_slots[_curSlotIdx].CompliteFire)
             {
-                _player.SuccessFireDelay();
+                OnFire?.Invoke();
                 _isFire = false;
             }
         }
@@ -97,7 +115,7 @@ public class WeaponManager : MonoBehaviour
         {
             if (_slots[_curSlotIdx].CompliteReload)
             {
-                _player.SuccessReload();
+                OnReload?.Invoke();
                 _isReloading = false;
             }
         }
@@ -122,19 +140,19 @@ public class WeaponManager : MonoBehaviour
             return false;
         }
 
-
-        if (_muzzleFlashs[_slots[_curSlotIdx].ID] != null && _slots[_curSlotIdx].Ammo != 0)
-        {
-            _muzzleFlashs[_slots[_curSlotIdx].ID].Play();
-            CPrint.KV("총 발사", $"{_slots[_curSlotIdx].Ammo - 1}");
-            _cameraManager.AddRecoil(_slots[_curSlotIdx].Recoil);
-        }
-
         _isFire = true;
         _slots[_curSlotIdx].Fire(ref _curRecoil);
 
         return true;
     }
+
+    // 머즐플래시 이벤트 함수
+    private void OnMuzzleFlash(int id, float recoil)
+    {
+        _muzzleFlashs[id].Play();
+        _cameraManager.AddRecoil(recoil);
+    }
+
     public bool Reload()
     {
         if (_isFire || _isReloading)
@@ -180,7 +198,10 @@ public class WeaponManager : MonoBehaviour
         _curSlotRecoilMax = _slots[index].RecoilMax;
         _curRecoil = _curSlotRecoilMin;
 
+        OnSetWeapon?.Invoke(index, _slots[index]);
+        
         _curSlotIdx = index;
+
         return true;
     }
 }

@@ -1,9 +1,26 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 
 public abstract class Weapon : MonoBehaviour
 {
+    // Weapon MuzzleFlash EventHandler
+    public event Action<int, float> OnMuzzleFlash;
+
+    // UI
+    public event Action<WeaponType, int> OnSetAmmo;
+
+    protected void CallMuzzleFlash(int ID, float recoil)
+    {
+        OnMuzzleFlash?.Invoke(ID, recoil);
+    }
+
+    protected void CallSetAmmo(WeaponType weaponType, int ammo)
+    {
+        OnSetAmmo?.Invoke(weaponType, ammo);
+    }
+
     public enum HandType
     {
         None,

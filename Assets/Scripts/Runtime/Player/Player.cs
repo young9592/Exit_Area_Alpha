@@ -1,8 +1,11 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
 public partial class Player : MonoBehaviour
 {
+    public event Action<float, float> OnSetHealth;
+    public event Action<float, float> OnSetStemina;
 
     #region Inspector
     [Header("Manager")]
@@ -60,9 +63,13 @@ public partial class Player : MonoBehaviour
     // 현재 점프중인가?
     private bool _doJump;
 
+    // 최근 달렸나?
+    private bool _curentRun;
+    private CTimer _steminaRecoverTimer = new CTimer();
+
     // 현재 사망 상태인가?
     private bool _isDead;
-    
+
     // 랜딩시 점프 쿨타임
     private CTimer _jumpDelayTimer = new CTimer();
     // 마우스 이동
@@ -110,7 +117,7 @@ public partial class Player : MonoBehaviour
 
         if (_weaponManager == null || _cameraPivot == null || _playerPivot == null)
         {
-            CPrint.Error("Player.cs - Null find.");
+            CPrint.Error("Player.cs Null find.");
             enabled = false;
             return;
         }
@@ -131,13 +138,15 @@ public partial class Player : MonoBehaviour
         #endregion
 
         _rig.enabled = false;
+
+        _weaponManager.OnFire += SuccessFireDelay;
+        _weaponManager.OnReload += SuccessReload;
     }
 
     private void Start()
     {
         InitSwap();
     }
-
     private void Update()
     {
         #region Null Check
@@ -162,13 +171,21 @@ public partial class Player : MonoBehaviour
         {
             _jumpDelayTimer.AddTimer();
         }
+        if (_steminaRecoverTimer.GetCurrentTimerState)
+        {
+            if (_steminaRecoverTimer.AddTimer())
+            {
+                _curentRun = false;
+            }
+        }
+
 
         Move();
         Fire();
         Reload();
         Swap();
+        RecoverStemina();
     }
-
     // 이동방향 설계
     private Vector3 BuildMoveDirection(Vector3 input)
     {
@@ -264,10 +281,10 @@ public partial class Player : MonoBehaviour
         // 회전 + 애니메이션 처리도 고려함
         Vector3 moveDir = (input.sqrMagnitude > 0.0001f) ? BuildMoveDirection(input) : Vector3.zero;
 
-        
+
         // 3. 이동 속도
         bool sprintKeyDown = Input.GetKey(_keySprint);
-        float speed = _walkSpeed * (sprintKeyDown ? _sprintMultiply : 1f);
+        float speed = _walkSpeed * (sprintKeyDown && _stemina != 0 ? _sprintMultiply : 1f);
 
         // 4. 점프
         // 업데이트에서 한번만 체크해서 넘긴다.
@@ -281,6 +298,17 @@ public partial class Player : MonoBehaviour
         // 5. 이동
         // 수평 + 수직 속도를 합쳐서 Move
         Vector3 velocity = moveDir * speed;
+
+        // 스프린트 키를 누른 상태에서 수평 이동량이 있다면 스테미너 감소
+        if (sprintKeyDown && velocity.sqrMagnitude > 0.0001)
+        {
+            ReduceStemina();
+        }
+        else if (!sprintKeyDown && _curentRun && !_steminaRecoverTimer.GetCurrentTimerState)
+        {
+            _steminaRecoverTimer.SetTimer(3f);
+        }
+
         velocity.y = _verticalVel;
 
         // 물리 힘은 아니라서 요청한 만큼 이동 시킨다.
@@ -291,7 +319,7 @@ public partial class Player : MonoBehaviour
         MouseRotate();
 
         // 7. 파라미터 업데이트 수행
-        float moveAnimationMultiple = (sprintKeyDown ?  1.5f : 1f);
+        float moveAnimationMultiple = (sprintKeyDown && _stemina != 0 ? 1.5f : 1f);
 
         _animator.SetFloat(_hashAnimationMoveSpeed, moveAnimationMultiple);
 
@@ -358,13 +386,60 @@ public partial class Player : MonoBehaviour
             _animator.SetInteger(_hashHandState, (int)type);
         }
     }
-    // 발사 및 재장전 쿨타임 끝
+    // 발사완료 트리거
     public void SuccessFireDelay()
     {
         _animator.SetBool(_hashFireDelay, false);
     }
+    // 재장전 완료 트리거
     public void SuccessReload()
     {
         _rig.enabled = true;
+    }
+    // 스테미너 회복
+    private void RecoverStemina()
+    {
+        if (_stemina == _steminaMax)
+        {
+            return;
+        }
+
+        if (!_curentRun)
+        {
+            _stemina += _steminaConsume * Time.deltaTime;
+            _stemina = Mathf.Clamp(_stemina, 0, _steminaMax);
+            OnSetStemina?.Invoke(_stemina, _steminaMax);
+        }
+    }
+    // 스테미너 소모
+    private void ReduceStemina()
+    {
+        if (_stemina == 0)
+        {
+            return;
+        }
+
+        _curentRun = true;
+        _stemina -= _steminaConsume * Time.deltaTime;
+        _stemina = Mathf.Clamp(_stemina, 0, _steminaMax);
+        OnSetStemina?.Invoke(_stemina, _steminaMax);
+    }
+    // 피격
+    public void TakeDamage(float damage)
+    {
+        CPrint.Log($"플레이어는 {damage}의 데미지를 입었습니다.");
+        _health -= damage;
+        _health = Mathf.Clamp(_health, 0, _healthMax);
+        OnSetHealth?.Invoke(_health, _healthMax);
+
+        if (_health == 0 && !_isDead)
+        {
+            // game over
+            CPrint.Warn("플레이어가 사망하였습니다.");
+            _animator.SetTrigger(_hashDead);
+            _controller.enabled = false;
+            _rig.enabled = false;
+            _isDead = true;
+        }
     }
 }
