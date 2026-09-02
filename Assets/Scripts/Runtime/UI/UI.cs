@@ -1,15 +1,25 @@
 using System;
+using System.Text;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class UI : MonoBehaviour
 {
-
     [Header("필수 연결 목록")]
     [SerializeField] private Player _player;
     [SerializeField] private Inventory _inventory;
     [SerializeField] private WeaponManager _weaponManager;
+    [SerializeField] private BasicCamera _cameraManager;
+
+    [Header("UI Interact View")]
+    [SerializeField] private GameObject _interactInfo;
+    [SerializeField] private GameObject _interactLine;
+    [SerializeField] private Image _lineImage;
+    [SerializeField] private Image _targetInfoBackgroundImage;
+    [SerializeField] private TextMeshProUGUI _targetNameText;
+    [SerializeField] private TextMeshProUGUI _targetInfoText;
+    [SerializeField] private string _interactTagName01 = "Weapon";
 
     [Header("UI Weapon Slot")]
     [SerializeField] private Image _equipWeaponImage;
@@ -33,18 +43,23 @@ public class UI : MonoBehaviour
     [SerializeField] private Sprite _noneSp;
     [SerializeField] private Sprite _weaponSp01;
     [SerializeField] private Sprite _weaponSp02;
+    [SerializeField] private Sprite _weaponSp03;
 
     [SerializeField] private Sprite _arBulletSp;
+    [SerializeField] private Sprite _hgBulletSp;
 
     #region Field
-    private float _curWeaponAmmo;
-    private float _curWeaponInventoryAmmo;
+    private string _targetName;
+    private StringBuilder _info = new StringBuilder(100);
+    // 둘이 세트
+    private GameObject _curInteractWeapon;
+    private Weapon _curWeaponScript;
 
+    // Player Status
     private float _health;
     private float _healthMax;
     private float _stemina;
     private float _steminaMax;
-
 
     // CrossHair
     private float _crossHairWidth = 30f;
@@ -61,6 +76,11 @@ public class UI : MonoBehaviour
     private Rect _rightHair = new Rect();
     private Rect _topHair = new Rect();
     private Rect _buttomHair = new Rect();
+    #endregion
+
+    #region Property
+    public GameObject InteractWeapon => _curInteractWeapon;
+    public Weapon InteractWeaponScript => _curWeaponScript;
     #endregion
 
     private void Awake()
@@ -80,6 +100,7 @@ public class UI : MonoBehaviour
         _greenTexture.Apply();
 
         // 이벤트 등록
+        _cameraManager.OnInteract += GetInteractInfo;
         _weaponManager.OnSetWeapon += SetWeapon;
         _weaponManager.CurrentSlot.OnSetAmmo += SetAmmo;
         _player.OnSetHealth += SetHealth;
@@ -97,6 +118,7 @@ public class UI : MonoBehaviour
                 inventoryAmmo = _inventory.NoneType;
                 break;
             case Weapon.WeaponType.HandGun:
+                inventoryAmmo = _inventory.AmmoHG;
                 break;
             case Weapon.WeaponType.Rifle:
                 inventoryAmmo = _inventory.AmmoAR;
@@ -115,7 +137,70 @@ public class UI : MonoBehaviour
         _curWeaponInventoryAmmoText.text = inventoryAmmo.ToString();
 
     }
+    public void GetInteractInfo(GameObject hitObject)
+    {
+        if(hitObject != _curInteractWeapon)
+        {
+            _interactInfo.SetActive(false);
+            _interactLine.SetActive(false);
+            _info.Clear();
+        }
 
+        if (hitObject == null)
+        {
+            _interactInfo.SetActive(false);
+            _interactLine.SetActive(false);
+            _curInteractWeapon = null;
+            _curWeaponScript = null;
+            _info.Clear();
+        }
+        else
+        {
+            if (hitObject.tag == _interactTagName01)
+            {
+                if (_curInteractWeapon == null)
+                {
+                    _curInteractWeapon = hitObject;
+                    _curWeaponScript = hitObject.GetComponent<Weapon>();
+                    _interactLine.SetActive(true);
+                    _lineImage.fillAmount = 0;
+                    _targetInfoBackgroundImage.fillAmount = 0;
+                }
+                // 계속 쳐다보면 라인이 늘어나면서 완료되면 info가 보이도록
+                else
+                {
+                    _lineImage.fillAmount = Mathf.Lerp(_lineImage.fillAmount, 1, 1f - Mathf.Exp(-10 * Time.deltaTime));
+
+                    if(_lineImage.fillAmount >= 0.95 && _lineImage.fillAmount <= 1)
+                    {
+                        _lineImage.fillAmount = 1;
+
+                        _targetInfoBackgroundImage.fillAmount = Mathf.Lerp(_targetInfoBackgroundImage.fillAmount, 1, 1f - Mathf.Exp(-10 * Time.deltaTime));
+
+                        if (_targetInfoBackgroundImage.fillAmount >= 0.95 && _targetInfoBackgroundImage.fillAmount < 1)
+                        {
+                            _targetInfoBackgroundImage.fillAmount = 1;
+
+
+                            _targetName = _curWeaponScript.Name;
+                            _info.Append($"공격력 : {_curWeaponScript.Damage}\n");
+                            _info.Append($"연사력 : {_curWeaponScript.FireDelay}\n");
+                            _info.Append($"장탄수 : {_curWeaponScript.Magazine}\n");
+
+                            _targetNameText.text = _targetName;
+                            _targetInfoText.text = _info.ToString();
+                            _interactInfo.SetActive(true);
+                        }
+                    }
+                }
+
+            }
+            else
+            {
+
+            }
+        }
+    }
     public void SetWeapon(int index, Weapon weapon)
     {
         _weaponManager.CurrentSlot.OnSetAmmo -= SetAmmo;
@@ -130,7 +215,7 @@ public class UI : MonoBehaviour
                 selectWeaponSprite = _noneSp;
                 selectBulletSprite = _noneSp;
                 break;
-                
+
             case 1:
                 selectWeaponSprite = _weaponSp01;
                 selectBulletSprite = _arBulletSp;
@@ -139,6 +224,10 @@ public class UI : MonoBehaviour
             case 2:
                 selectWeaponSprite = _weaponSp02;
                 selectBulletSprite = _arBulletSp;
+                break;
+            case 3:
+                selectWeaponSprite = _weaponSp03;
+                selectBulletSprite = _hgBulletSp;
                 break;
         }
 
@@ -181,7 +270,6 @@ public class UI : MonoBehaviour
         float clamp01 = Mathf.Clamp01(_health / _healthMax);
         _healthBar.fillAmount = clamp01;
     }
-
     public void SetStemina(float stemina, float steminaMax)
     {
         _stemina = stemina;

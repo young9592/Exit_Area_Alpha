@@ -1,13 +1,12 @@
 using UnityEngine;
 
-public class AK47 : Weapon
+public class Glock17 : Weapon
 {
-
     private enum ReloadState
     {
         MagazineDrop,
         MagazineInsert,
-        Bolt,
+        Release,
         None
     }
 
@@ -15,35 +14,35 @@ public class AK47 : Weapon
 
     private void Awake()
     {
-        _id = 2;
-        _name = "AK47";
-        _damage = 7f;
-        _fireDelay = 0.1f;
-        _recoil = 1.25f;
-        _recoilMin = 0.5f;
+        _id = 3;
+        _name = "Glock17";
+        _damage = 10f;
+        _fireDelay = 0.17f;
+        _recoil = 1.2f;
+        _recoilMin = 1.7f;
         _recoilMax = 15f;
-        _ammo = 30;
-        _magazine = 30;
+        _ammo = 20;
+        _magazine = 20;
         _returnAmmo = 0;
 
         _pelletCount = 1;
-        _handType = HandType.TwoHand;
-        _weaponType = WeaponType.Rifle;
+        _handType = HandType.OneHand;
+        _weaponType = WeaponType.HandGun;
 
         _audioSource = GetComponentInParent<AudioSource>();
 
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire01"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire02"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire03"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire04"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire05"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Fire/HG_Fire_01"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Fire/HG_Fire_02"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Fire/HG_Fire_03"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Fire/HG_Fire_04"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Fire/HG_Fire_05"));
 
-        _reloadDelays.Add(1f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload01"));
-        _reloadDelays.Add(1f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload02"));
-        _reloadDelays.Add(1.08f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload03"));
+        _reloadDelays.Add(0.4f);
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Reload/HG_Reload_01"));
+        _reloadDelays.Add(0.4f);                                                  
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Reload/HG_Reload_02"));
+        _reloadDelays.Add(0.5f);                                                  
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Reload/HG_Reload_03"));
 
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
 
@@ -84,9 +83,9 @@ public class AK47 : Weapon
                             Insert();
                             break;
                         case ReloadState.MagazineInsert:
-                            Bolt();
+                            Release();
                             break;
-                        case ReloadState.Bolt:
+                        case ReloadState.Release:
                             Done();
                             break;
                     }
@@ -111,14 +110,12 @@ public class AK47 : Weapon
             return;
         }
 
-        // 탄 소모 및 실제 탄 Object 생성
         _ammo -= 1;
         CallBulletSpawn(_damage, curRecoil);
         CallMuzzleFlash(ID, _recoil);
         curRecoil += _recoil;
         Mathf.Clamp(curRecoil, _recoilMin, _recoilMax);
 
-        // 사운드 출력
         int randomSound = UnityEngine.Random.Range(0, _fireClips.Count);
         CallSoundPlay(FireClips[randomSound]);
         _fireDelayTimer.SetTimer(_fireDelay);
@@ -160,9 +157,9 @@ public class AK47 : Weapon
         CallSoundPlay(ReloadClips[(int)_reloadState]);
     }
 
-    private void Bolt()
+    private void Release()
     {
-        _reloadState = ReloadState.Bolt;
+        _reloadState = ReloadState.Release;
         _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
         CallSoundPlay(ReloadClips[(int)_reloadState]);
     }

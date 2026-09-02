@@ -4,8 +4,13 @@ using UnityEngine.Animations.Rigging;
 
 public partial class Player : MonoBehaviour
 {
+    // 체력과 스테미너 갱신 이벤트 핸들러
     public event Action<float, float> OnSetHealth;
     public event Action<float, float> OnSetStemina;
+
+    // 무기 줍기 및 버리기
+    public event Action OnPickup;
+    public event Action OnDrop;
 
     #region Inspector
     [Header("Manager")]
@@ -54,6 +59,9 @@ public partial class Player : MonoBehaviour
     [SerializeField] private KeyCode _keyReload = KeyCode.R;
     [SerializeField] private KeyCode _keyJump = KeyCode.Space;
     [SerializeField] private KeyCode _keySprint = KeyCode.LeftShift;
+
+    [SerializeField] private KeyCode _keyPickup = KeyCode.F;
+    [SerializeField] private KeyCode _keyDrop = KeyCode.G;
     #endregion
 
     #region Field
@@ -141,11 +149,12 @@ public partial class Player : MonoBehaviour
 
         _weaponManager.OnFire += SuccessFireDelay;
         _weaponManager.OnReload += SuccessReload;
+        _weaponManager.OnPickup += InitSwap;
     }
 
     private void Start()
     {
-        InitSwap();
+        InitSwap(0);
     }
     private void Update()
     {
@@ -184,6 +193,8 @@ public partial class Player : MonoBehaviour
         Fire();
         Reload();
         Swap();
+        PickUp();
+        Drop();
         RecoverStemina();
     }
     // 이동방향 설계
@@ -348,6 +359,12 @@ public partial class Player : MonoBehaviour
     }
     private void Swap()
     {
+        // 애니메이션 안정성
+        if (_doJump || _jumpDelayTimer.GetCurrentTimerState)
+        {
+            return;
+        }
+
         if (Input.GetKeyDown(_keySlot01))
         {
             if (_weaponManager.SelectSlot(0, out Weapon.HandType type))
@@ -376,12 +393,39 @@ public partial class Player : MonoBehaviour
             }
         }
     }
-    // 초기 0번 슬롯 무기 착용
-    private void InitSwap()
+    // 아이템 줍기
+    private void PickUp()
     {
-        if (_weaponManager.SelectSlot(0, out Weapon.HandType type))
+        // 애니메이션 안정성
+        if (_doJump || _jumpDelayTimer.GetCurrentTimerState)
         {
-            // 슬롯 0번
+            return;
+        }
+
+        if (Input.GetKeyDown(_keyPickup))
+        {
+            OnPickup?.Invoke();
+        }
+    }
+    // 아이템 버리기
+    private void Drop()
+    {
+        // 애니메이션 안정성
+        if (_doJump || _jumpDelayTimer.GetCurrentTimerState)
+        {
+            return;
+        }
+
+        if (Input.GetKeyDown(_keyDrop))
+        {
+            OnDrop?.Invoke();
+        }
+    }
+    // 초기 0번 슬롯 무기 착용
+    private void InitSwap(int index)
+    {
+        if (_weaponManager.SelectSlot(index, out Weapon.HandType type))
+        {
             _rig.enabled = type != Weapon.HandType.None;
             _animator.SetInteger(_hashHandState, (int)type);
         }

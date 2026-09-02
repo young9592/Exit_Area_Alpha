@@ -1,7 +1,10 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 public partial class BasicCamera : MonoBehaviour
 {
+    public event Action<GameObject> OnInteract;
+
     public enum ECameraMode
     {
         Idle,
@@ -24,7 +27,11 @@ public partial class BasicCamera : MonoBehaviour
     [SerializeField] private float _offsetTop = -2f;
 
     [Header("사격 포인트")]
-    [SerializeField] private Transform _firePointTr;  
+    [SerializeField] private Transform _firePointTr;
+
+    [Header("상호작용")]
+    [SerializeField] private string _interactLayerName = "Item";
+    [SerializeField] private float _interactDistance = 3f;
 
     [Header("반동 오프셋")]
     [SerializeField] private float _recoilMultiple = 2f;
@@ -82,6 +89,27 @@ public partial class BasicCamera : MonoBehaviour
                 TickThird();
                 break;
         }
+
+        DetectInteract();
+    }
+
+    // 상호작용 물체 감지
+    private void DetectInteract()
+    {
+        int layerMask = LayerMask.GetMask(_interactLayerName);
+
+        Physics.Raycast(_firePointTr.position, _firePointTr.forward, out RaycastHit hit, _interactDistance, layerMask);
+
+        // 상호작용 물체 없음
+        if (hit.collider == null)
+        {
+            OnInteract?.Invoke(null);
+        }
+        // 상호작용 물체 있음
+        else
+        {
+            OnInteract?.Invoke(hit.collider.gameObject);
+        }
     }
 
     private void SetMode(ECameraMode mode, bool snap)
@@ -116,7 +144,8 @@ public partial class BasicCamera : MonoBehaviour
 
         _camTr.position = Vector3.Lerp(_camTr.position, desiredPos, t);
         _camTr.rotation = Quaternion.Slerp(_camTr.rotation, desiredRot, t);
-        
+
+        // 사격포인트는 즉시 반영되게
         _firePointTr.position = desiredPos;
         _firePointTr.rotation = desiredRot;
 
@@ -131,12 +160,12 @@ public partial class BasicCamera : MonoBehaviour
 
     private void OnDrawGizmos()
     {
-        /*
+
         Gizmos.color = Color.red;
-        Gizmos.DrawRay(_target.transform.position, _target.transform.forward * 10f);
-        
+        Gizmos.DrawRay(_target.transform.position, _target.transform.forward * _interactDistance);
+        /*
         Gizmos.color = Color.blue;
-        Gizmos.DrawRay(_playerViewTr.transform.position, _playerViewTr.transform.forward * 10f);
+        Gizmos.DrawRay(_playerViewTr.transform.position, _playerViewTr.transform.forward * 3f);
         */
     }
 }

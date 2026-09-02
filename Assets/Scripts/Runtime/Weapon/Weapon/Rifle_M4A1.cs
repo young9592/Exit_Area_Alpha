@@ -1,7 +1,6 @@
 using UnityEngine;
-using System;
 
-public class M4A1 : Weapon, IUseBulletPool
+public class M4A1 : Weapon
 {
     private enum ReloadState
     {
@@ -11,11 +10,7 @@ public class M4A1 : Weapon, IUseBulletPool
         None
     }
 
-    private CTimer _fireDelayTimer = new CTimer();
-    private CTimer _reloadDelayTimer = new CTimer();
     private ReloadState _reloadState = ReloadState.None;
-    private AudioClip _empty = null;
-    private BulletPool _bulletObjectPool = null;
 
     private void Awake()
     {
@@ -52,11 +47,6 @@ public class M4A1 : Weapon, IUseBulletPool
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
 
         #region Null Check
-        if (_audioSource == null)
-        {
-            CPrint.Error($"{_name}.cs AudioSource Connect Fail.");
-            return;
-        }
 
         if (_fireClips.Count < 5 || _reloadClips.Count < 3 || _empty == null)
         {
@@ -68,19 +58,6 @@ public class M4A1 : Weapon, IUseBulletPool
 
     private void Update()
     {
-        #region Null Check
-        if (_audioSource == null)
-        {
-            CPrint.Error($"{_name}.cs AudioSource Connect Fail.");
-            return;
-        }
-        if (_bulletObjectPool == null)
-        {
-            CPrint.Error($"{_name}.cs ObjectPool Connect Fail.");
-            return;
-
-        }
-        #endregion
 
         if (_isFire)
         {
@@ -116,18 +93,6 @@ public class M4A1 : Weapon, IUseBulletPool
             }
         }
     }
-
-    public void SetBulletObjectPool(BulletPool bulletObjectPool)
-    {
-        _bulletObjectPool = bulletObjectPool;
-
-        if (_bulletObjectPool == null)
-        {
-            CPrint.Error($"{_name}.cs ObjectPool Connect Fail.");
-            enabled = false;
-            return;
-        }
-    }
     public override void Fire(ref float curRecoil)
     {
         if (_isFire)
@@ -148,16 +113,16 @@ public class M4A1 : Weapon, IUseBulletPool
 
         // 탄 소모 및 실제 탄 Object 생성
         _ammo -= 1;
-        _bulletObjectPool.SpawnBullet(_damage, curRecoil);
+        CallBulletSpawn(_damage, curRecoil);
+        CallMuzzleFlash(ID, _recoil);
         curRecoil += _recoil;
         Mathf.Clamp(curRecoil, _recoilMin, _recoilMax);
 
         // 사운드 출력
         int randomSound = UnityEngine.Random.Range(0, _fireClips.Count);
-        _audioSource.PlayOneShot(_fireClips[randomSound]);
+        CallSoundPlay(FireClips[randomSound]);
         _fireDelayTimer.SetTimer(_fireDelay);
 
-        CallMuzzleFlash(ID, _recoil);
 
         CallSetAmmo(_weaponType, _ammo);
 
@@ -187,25 +152,22 @@ public class M4A1 : Weapon, IUseBulletPool
         _isReload = true;
         _completeReload = false;
         _reloadState = ReloadState.MagazineDrop;
-        _audioSource.clip = _reloadClips[(int)_reloadState];
-        _audioSource.Play();
         _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
+        CallSoundPlay(ReloadClips[(int)_reloadState]);
     }
 
     private void Insert()
     {
         _reloadState = ReloadState.MagazineInsert;
-        _audioSource.clip = _reloadClips[(int)_reloadState];
-        _audioSource.Play();
         _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
+        CallSoundPlay(ReloadClips[(int)_reloadState]);
     }
 
     private void Bolt()
     {
         _reloadState = ReloadState.Bolt;
-        _audioSource.clip = _reloadClips[(int)_reloadState];
-        _audioSource.Play();
         _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
+        CallSoundPlay(ReloadClips[(int)_reloadState]);
     }
 
     private void Done()

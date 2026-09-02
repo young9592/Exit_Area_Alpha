@@ -7,8 +7,11 @@ public abstract class Weapon : MonoBehaviour
 {
     // Weapon MuzzleFlash EventHandler
     public event Action<int, float> OnMuzzleFlash;
+    // Weapon Sound Play EventHandler
+    public event Action<AudioClip> OnSoundPlay;
 
-    // UI
+    public event Action<float, float> OnBulletSpawn;
+    // UI EventHandler
     public event Action<WeaponType, int> OnSetAmmo;
 
     protected void CallMuzzleFlash(int ID, float recoil)
@@ -21,6 +24,16 @@ public abstract class Weapon : MonoBehaviour
         OnSetAmmo?.Invoke(weaponType, ammo);
     }
 
+    protected void CallSoundPlay(AudioClip clips)
+    {
+        OnSoundPlay?.Invoke(clips);
+    }
+
+    protected void CallBulletSpawn(float damage, float curRecoil)
+    {
+        OnBulletSpawn?.Invoke(damage, curRecoil);
+    }
+        
     public enum HandType
     {
         None,
@@ -62,6 +75,10 @@ public abstract class Weapon : MonoBehaviour
     protected int _returnAmmo;
 
     protected AudioSource _audioSource;
+
+    protected CTimer _fireDelayTimer = new CTimer();
+    protected CTimer _reloadDelayTimer = new CTimer();
+    protected AudioClip _empty = null;
     #endregion
 
     #region Property
@@ -91,4 +108,10 @@ public abstract class Weapon : MonoBehaviour
 
     public abstract void Fire(ref float _recoil);
     public abstract void Reload(Inventory inventory);
+
+    // 무기 줍기시 데이터 교환
+    public void Initialize(int ammo)
+    {
+        _ammo = ammo;
+    }
 }

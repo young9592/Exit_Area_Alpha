@@ -8,6 +8,7 @@ TagManager:
   - Hit_Head
   - Hit_Arm
   - Hit_Leg
+  - Weapon
   layers:
   - Default
   - TransparentFX
@@ -16,7 +17,7 @@ TagManager:
   - Water
   - UI
   - Enemy
-  - 
+  - Item
   - 
   - 
   - 
