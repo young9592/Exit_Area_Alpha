@@ -65,6 +65,9 @@ public partial class Player : MonoBehaviour
     #endregion
 
     #region Field
+    // 주변 객체들이 플레이어 위치를 확인하기 위한 변수
+    private static Transform _playerTr;
+
     // 수직 속도
     private float _verticalVel;
 
@@ -97,6 +100,10 @@ public partial class Player : MonoBehaviour
     private int _hashDead;
     #endregion
 
+    #region Property
+    public static Transform PlayerTr => _playerTr;
+    #endregion
+
     // 커스텀 함수 아님
     private void Reset()
     {
@@ -107,6 +114,9 @@ public partial class Player : MonoBehaviour
 
     private void Awake()
     {
+        // 플레이어 생성 시 transform 넣어주기
+        _playerTr = transform;
+
         #region Null Check
         if (_controller == null)
         {
@@ -370,6 +380,8 @@ public partial class Player : MonoBehaviour
             if (_weaponManager.SelectSlot(0, out Weapon.HandType type))
             {
                 // 슬롯 0번
+                // rigbuilder를 새로 껐다 켜줘야 손이 맞는 방향으로 간다.
+                _rig.enabled = false;
                 _rig.enabled = type != Weapon.HandType.None;
                 _animator.SetInteger(_hashHandState, (int)type);
             }
@@ -379,6 +391,7 @@ public partial class Player : MonoBehaviour
             if (_weaponManager.SelectSlot(1, out Weapon.HandType type))
             {
                 // 슬롯 1번
+                _rig.enabled = false;
                 _rig.enabled = type != Weapon.HandType.None;
                 _animator.SetInteger(_hashHandState, (int)type);
             }
@@ -388,6 +401,7 @@ public partial class Player : MonoBehaviour
             if (_weaponManager.SelectSlot(2, out Weapon.HandType type))
             {
                 // 슬롯 2번
+                _rig.enabled = false;
                 _rig.enabled = type != Weapon.HandType.None;
                 _animator.SetInteger(_hashHandState, (int)type);
             }
@@ -426,6 +440,7 @@ public partial class Player : MonoBehaviour
     {
         if (_weaponManager.SelectSlot(index, out Weapon.HandType type))
         {
+            _rig.enabled = false;
             _rig.enabled = type != Weapon.HandType.None;
             _animator.SetInteger(_hashHandState, (int)type);
         }

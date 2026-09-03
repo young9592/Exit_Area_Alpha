@@ -179,10 +179,12 @@ public class WeaponManager : MonoBehaviour
             return false;
         }
 
+        // 핸드 트래커 위치 변경
         var data = _traker.data;
         data.target = _leftHandGo[_slots[index].ID];
         _traker.data = data;
 
+        // 현재 손에 들려있는 무기 활성화하여 보여주기
         for (int i = 0; i < _handWeaponGO.Count; i++)
         {
             _handWeaponGO[i].SetActive(false);
@@ -190,6 +192,7 @@ public class WeaponManager : MonoBehaviour
         _handWeaponGO[_slots[index].ID].SetActive(true);
 
         type = _slots[index].GetHandType;
+        _cameraManager.SetHandState((BasicCamera.HandState) type);
 
         _curSlotRecoilMin = _slots[index].RecoilMin;
         _curSlotRecoilMax = _slots[index].RecoilMax;
@@ -254,7 +257,6 @@ public class WeaponManager : MonoBehaviour
                     _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<M4A1>();
                     _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
                     break;
-
                 case 2:
                     _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<AK47>();
                     _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);

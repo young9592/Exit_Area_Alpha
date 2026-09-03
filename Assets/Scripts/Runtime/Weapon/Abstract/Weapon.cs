@@ -37,8 +37,8 @@ public abstract class Weapon : MonoBehaviour
     public enum HandType
     {
         None,
-        OneHand,
-        TwoHand
+        Pistol,
+        Rifle
     }
 
     public enum WeaponType

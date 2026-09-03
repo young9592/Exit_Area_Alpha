@@ -1,6 +1,8 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
-public class Zombie : MonoBehaviour
+public class Walker : Zombie
 {
     public enum State
     {
@@ -9,33 +11,6 @@ public class Zombie : MonoBehaviour
         Attack,
         Dead
     }
-
-    #region Inspector
-    [Header("필수 참조")]
-    [SerializeField] private Animator _animator;
-    [SerializeField] private CharacterController _controller;
-    [SerializeField] private Transform _playerTr;
-
-    [Header("Zombie Status")]
-    [SerializeField] private float _health = 100f;
-    [SerializeField] private float _healthMax = 100f;
-
-    [SerializeField] private float _damage = 5f;
-    [SerializeField] private float _ATKDelay = 3f;
-    [SerializeField] private float _ATKHitDuration = 0.5f;
-    [SerializeField] private float _attackDistance = 2f;
-
-
-    [SerializeField] private float _moveSpeedMax = 3f;
-
-    [SerializeField] private float _detectDistance = 10f;
-    [SerializeField] private float _detectDuration = 10f;
-
-    [SerializeField] private float _landingDelay = 1.5f;
-
-
-    [Header("RigidBody")]
-    [SerializeField] private float _groundStick = -2.0f;
 
     [Header("Animation Parameter")]
     [SerializeField] private string _paramSpeed = "fSpeed";
@@ -55,9 +30,7 @@ public class Zombie : MonoBehaviour
     [SerializeField] private BoxCollider _hitBoxHandR;
     [SerializeField] private BoxCollider _hitBoxLegL;
     [SerializeField] private BoxCollider _hitBoxLegR;
-
     [SerializeField] private GameObject _ATKHitBox;
-    #endregion
 
     #region Field
     private State _curState = State.Idle;
@@ -73,7 +46,7 @@ public class Zombie : MonoBehaviour
     private int _hashDead;
 
     // 발각시 일정시간 추적 타이머
-    private CTimer _detectTimer = new CTimer();
+    // private CTimer _detectTimer = new CTimer();
     // 공격 후 딜레이
     private CTimer _ATKDelayTimer = new CTimer();
     // 공격 판정 충돌박스 삭제 시간
@@ -84,12 +57,21 @@ public class Zombie : MonoBehaviour
     private CTimer _deadTimer = new CTimer();
     #endregion
 
-    private void OnEnable()
+    protected override void OnEnable()
     {
+        base.OnEnable();
+
+        // 상태 초기화
         _health = _healthMax;
         _curState = State.Idle;
         ToggleCollider(true);
     }
+
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+    }
+
     private void Awake()
     {
         #region StringToHash
@@ -107,7 +89,7 @@ public class Zombie : MonoBehaviour
         {
             if (_deadTimer.AddTimer())
             {
-                this.gameObject.SetActive(false);
+                gameObject.SetActive(false);
             }
         }
         if (_ATKHitTimer.GetCurrentTimerState)
@@ -122,10 +104,12 @@ public class Zombie : MonoBehaviour
             _ATKDelayTimer.AddTimer();
         }
 
+        /*
         if (_detectTimer.GetCurrentTimerState)
         {
             _detectTimer.AddTimer();
         }
+        */
 
         if (_landingTimer.GetCurrentTimerState)
         {
@@ -141,13 +125,13 @@ public class Zombie : MonoBehaviour
         ChangeState();
         UpdateState();
     }
-    private void ChangeState()
+    // 상태 변환
+    protected override void ChangeState()
     {
         if (_curState == State.Dead)
         {
             return;
         }
-
 
         Vector3 distanceVec = _playerTr.position - transform.position;
         float distance = distanceVec.sqrMagnitude;
@@ -157,7 +141,7 @@ public class Zombie : MonoBehaviour
         float detectDistanceSqr = _detectDistance * _detectDistance;
         float attackDistanceSqr = _attackDistance * _attackDistance;
 
-        if (!_detectTimer.GetCurrentTimerState)
+        if (!_isAlertMode)
         {
             if (distance > detectDistanceSqr)
             {
@@ -172,10 +156,11 @@ public class Zombie : MonoBehaviour
                     return;
                 }
                 // 발견 타이머 작동
-                _detectTimer.SetTimer(_detectDuration);
+                //_detectTimer.SetTimer(_detectDuration);
+                _isAlertMode = true;
             }
         }
-        else if (_detectTimer.GetCurrentTimerState)
+        else
         {
             if (distance > attackDistanceSqr)
             {
@@ -194,7 +179,7 @@ public class Zombie : MonoBehaviour
                 if (!_ATKDelayTimer.GetCurrentTimerState)
                 {
                     _curState = State.Attack;
-                    _detectTimer.SetTimer(_detectDuration);
+                    //_detectTimer.SetTimer(_detectDuration);
                 }
                 else
                 {
@@ -203,7 +188,8 @@ public class Zombie : MonoBehaviour
             }
         }
     }
-    private void UpdateState()
+    // 행동 수행
+    protected override void UpdateState()
     {
         switch (_curState)
         {
@@ -264,10 +250,10 @@ public class Zombie : MonoBehaviour
     }
     private void TargetRotate(Vector3 moveDir, bool isLerp)
     {
-        // y축이 차이닐 시 기울어짐.
+        // y축이 차이닐 시 기울어지니 보정
         moveDir.y = 0f;
         Quaternion targetRot = Quaternion.LookRotation(moveDir, Vector3.up);
-        
+
         if (isLerp)
         {
             // 부드럽게 회전
@@ -305,14 +291,12 @@ public class Zombie : MonoBehaviour
             }
         }
     }
-    public void TakeDamage(float damage)
+    public override void TakeDamage(float damage)
     {
         CPrint.Log($"좀비는 {damage}데미지를 입었습니다.");
         _health -= damage;
         Mathf.Clamp(_health, 0, _healthMax);
-        // 추적 상태로 전환
-        _detectTimer.SetTimer(_detectDuration);
-
+        
         if (_health <= 0)
         {
             CPrint.Log("좀비는 죽었습니다.");
@@ -322,7 +306,14 @@ public class Zombie : MonoBehaviour
 
             _deadTimer.SetTimer(3f);
         }
+        else
+        {
+            // 생존 시 추적 상태로 전환 및 같은 좀비들에게 적을 알림
+            // _detectTimer.SetTimer(_detectDuration);
+            _isAlertMode = true;
+        }
     }
+
     private void ToggleCollider(bool toggle)
     {
         _controller.enabled = toggle;
@@ -341,10 +332,7 @@ public class Zombie : MonoBehaviour
     {
         // 씬 확인용
         Vector3 zombiePos = transform.position;
-        Vector3 targetPos = _playerTr.position;
         Vector3 forwardDir = transform.forward;
-        Vector3 distanceVec = targetPos - zombiePos;
-        Vector3 targetDir = distanceVec.normalized;
 
         Gizmos.color = Color.green;
         float halfAngle = 45f;

@@ -26,7 +26,7 @@ public class Glock17 : Weapon
         _returnAmmo = 0;
 
         _pelletCount = 1;
-        _handType = HandType.OneHand;
+        _handType = HandType.Pistol;
         _weaponType = WeaponType.HandGun;
 
         _audioSource = GetComponentInParent<AudioSource>();
@@ -37,11 +37,11 @@ public class Glock17 : Weapon
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Fire/HG_Fire_04"));
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Fire/HG_Fire_05"));
 
-        _reloadDelays.Add(0.4f);
+        _reloadDelays.Add(0.8f);
         _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Reload/HG_Reload_01"));
-        _reloadDelays.Add(0.4f);                                                  
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Reload/HG_Reload_02"));
         _reloadDelays.Add(0.5f);                                                  
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Reload/HG_Reload_02"));
+        _reloadDelays.Add(0.1f);                                                  
         _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Reload/HG_Reload_03"));
 
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");

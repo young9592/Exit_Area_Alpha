@@ -26,7 +26,7 @@ public class M4A1 : Weapon
         _returnAmmo = 0;
 
         _pelletCount = 1;
-        _handType = HandType.TwoHand;
+        _handType = HandType.Rifle;
         _weaponType = WeaponType.Rifle;
 
         _audioSource = GetComponentInParent<AudioSource>();

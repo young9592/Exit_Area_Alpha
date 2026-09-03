@@ -11,6 +11,13 @@ public partial class BasicCamera : MonoBehaviour
         ThirdPerson
     }
 
+    public enum HandState
+    {
+        None,
+        Pistol,
+        Rifle
+    }
+
     #region Inspector
     [Header("시작 모드")]
     [SerializeField] private ECameraMode _startMode = ECameraMode.ThirdPerson;
@@ -22,9 +29,13 @@ public partial class BasicCamera : MonoBehaviour
     // 플레이어가 바라보는 방향
     [Header("Player Dir View")]
     [SerializeField] private Transform _viewTr;
-    [SerializeField] private float _offsetForward = 1f;
-    [SerializeField] private float _offsetRight = 1f;
-    [SerializeField] private float _offsetTop = -2f;
+    [SerializeField] private float _rifleOffsetForward = 6.5f;
+    [SerializeField] private float _rifleOffsetRight = 5f;
+    [SerializeField] private float _rifleOffsetTop = -1f;
+
+    [SerializeField] private float _hgOffsetForward = 4.5f;
+    [SerializeField] private float _hgOffsetRight = 5f;
+    [SerializeField] private float _hgOffsetTop = -2f;
 
     [Header("사격 포인트")]
     [SerializeField] private Transform _firePointTr;
@@ -44,6 +55,9 @@ public partial class BasicCamera : MonoBehaviour
     #region Field
     private Transform _camTr;
     private ECameraMode _mode;
+
+    // 현재 손 동작에 맞는 에임 조정
+    private HandState _handState;
     #endregion
 
     private void Start()
@@ -149,13 +163,37 @@ public partial class BasicCamera : MonoBehaviour
         _firePointTr.position = desiredPos;
         _firePointTr.rotation = desiredRot;
 
-        _viewTr.position = _target.position + _target.forward * _offsetForward + _target.right * _offsetRight + _target.up * _offsetTop;
+
+        float curOffsetForward = 0f;
+        float curOffsetRight = 0f;
+        float curOffsetTop = 0f;
+
+        switch (_handState)
+        {
+            case HandState.Pistol:
+                curOffsetForward = _hgOffsetForward;
+                curOffsetRight = _hgOffsetRight;
+                curOffsetTop = _hgOffsetTop;
+                break;
+            case HandState.Rifle:
+                curOffsetForward = _rifleOffsetForward;
+                curOffsetRight = _rifleOffsetRight;
+                curOffsetTop = _rifleOffsetTop;
+                break;
+        }
+
+        _viewTr.position = _target.position + _target.forward * curOffsetForward + _target.right * curOffsetRight + _target.up * curOffsetTop;
     }
 
     // Camera Recoil
     public void AddRecoil(float rotX)
     {
         _camTr.rotation *= Quaternion.Euler(-rotX * _recoilMultiple, 0f, 0f);
+    }
+
+    public void SetHandState(HandState handState)
+    {
+        _handState = handState;
     }
 
     private void OnDrawGizmos()
