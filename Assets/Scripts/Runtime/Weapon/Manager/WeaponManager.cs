@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
@@ -9,7 +8,7 @@ public class WeaponManager : MonoBehaviour
     // UI 무기변경
     public event Action<int, Weapon> OnSetWeapon;
     // 무기 줍거나 버릴 시 갱신 이벤트 핸들러
-    public event Action<int> OnPickup;
+    public event Action<int> OnSwap;
 
     // 무기 발사 및 재장전 핸들러
     public event Action OnFire;
@@ -19,7 +18,7 @@ public class WeaponManager : MonoBehaviour
     [Header("참조")]
     [SerializeField] private Player _player;
     [SerializeField] private UI _uiManager;
-    [SerializeField] private Inventory _inventory;
+    [SerializeField] private Inventory _inventoryManager;
     [SerializeField] private BasicCamera _cameraManager;
     [SerializeField] private BulletPool _bulletPool;
     [SerializeField] private AudioSource _audioSource;
@@ -55,6 +54,7 @@ public class WeaponManager : MonoBehaviour
 
     #region Property
     public Weapon CurrentSlot => _slots[_curSlotIdx];
+    public bool CurrentCanZoom => _slots[_curSlotIdx].CanZoom;
     public int CurrentSlotID => _slots[_curSlotIdx].ID;
     public int CurrentSlotAmmo => _slots[_curSlotIdx].Ammo;
     public float CurRecoil => _curRecoil;
@@ -66,7 +66,7 @@ public class WeaponManager : MonoBehaviour
 
         // 추후 무기 갯수에 따라서 count가 list랑 동일한지 체크해야합니다.
         #region Null Check
-        if (_player == null || _inventory == null || _cameraManager == null || _bulletPool == null || _audioSource == null)
+        if (_player == null || _inventoryManager == null || _cameraManager == null || _bulletPool == null || _audioSource == null)
         {
             CPrint.Error("WeaponManager.cs Null find.");
             enabled = false;
@@ -74,7 +74,7 @@ public class WeaponManager : MonoBehaviour
         }
         #endregion
 
-        _player.OnPickup += PickUp;
+        _player.OnInteract += Interact;
         _player.OnDrop += Drop;
     }
 
@@ -96,7 +96,7 @@ public class WeaponManager : MonoBehaviour
     private void Update()
     {
         #region Null Check
-        if (_player == null || _inventory == null || _cameraManager == null || _bulletPool == null || _audioSource == null)
+        if (_player == null || _inventoryManager == null || _cameraManager == null || _bulletPool == null || _audioSource == null)
         {
             CPrint.Error("WeaponManager.cs Null find.");
             enabled = false;
@@ -112,6 +112,12 @@ public class WeaponManager : MonoBehaviour
                 OnFire?.Invoke();
                 _isFire = false;
             }
+            
+            // 무결성 체크
+            if (!_slots[_curSlotIdx].IsFire)
+            {
+                _isFire = false;
+            }
         }
         // 재장전중일때 완료 되었는지 체크
         if (_isReloading)
@@ -119,6 +125,11 @@ public class WeaponManager : MonoBehaviour
             if (_slots[_curSlotIdx].CompliteReload)
             {
                 OnReload?.Invoke();
+                _isReloading = false;
+            }
+            // 무결성 체크
+            if (!_slots[_curSlotIdx].IsReload)
+            {
                 _isReloading = false;
             }
         }
@@ -161,7 +172,7 @@ public class WeaponManager : MonoBehaviour
 
 
         _isReloading = true;
-        _slots[_curSlotIdx].Reload(_inventory);
+        _slots[_curSlotIdx].Reload(_inventoryManager);
 
         // 인벤토리 남은 탄환 0발
         if (_slots[_curSlotIdx].ReturnAmmo == 0)
@@ -220,19 +231,26 @@ public class WeaponManager : MonoBehaviour
     {
         _bulletPool.SpawnBullet(damage, curRecoil);
     }
-    private void PickUp()
+    private void Interact()
     {
+        if (_isFire || _isReloading)
+        {
+            return;
+        }
+
+
         GameObject interactObject = _uiManager.InteractWeapon;
-        Weapon interactWeaponScript = _uiManager.InteractWeaponScript;
 
         if (interactObject == null)
         {
             return;
         }
 
-        // 무기일 경우
-        if (interactObject.tag == "Weapon")
+        // 무기교체인 경우
+        if (interactObject.CompareTag("Weapon"))
         {
+            Weapon interactWeaponScript = _uiManager.InteractWeaponScript;
+
             // 이벤트 해제
             _slots[_curSlotIdx].OnMuzzleFlash -= MuzzleFlashPlay;
             _slots[_curSlotIdx].OnBulletSpawn -= SpawnBullet;
@@ -265,6 +283,14 @@ public class WeaponManager : MonoBehaviour
                     _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Glock17>();
                     _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
                     break;
+                case 4:
+                    _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Jackhammer>();
+                    _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
+                    break;
+                case 5:
+                    _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Scout>();
+                    _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
+                    break;
                 default:
                     CPrint.Log("WeaponManager.cs 새로운 무기 추가됨 추가 필요");
                     break;
@@ -277,12 +303,29 @@ public class WeaponManager : MonoBehaviour
             _slots[_curSlotIdx].OnBulletSpawn += SpawnBullet;
             _slots[_curSlotIdx].OnSoundPlay += SoundPlay;
 
-            OnPickup?.Invoke(_curSlotIdx);
+            OnSwap?.Invoke(_curSlotIdx);
         }
+        else if(interactObject.CompareTag("WeaponCase"))
+        {
+            ItemBox weaponCaseScript = interactObject.GetComponent<ItemBox>();
+            weaponCaseScript.Open();
+        }
+        else if (interactObject.CompareTag("AmmoCase"))
+        {
+            AmmoBox ammoBoxScript = interactObject.GetComponent<AmmoBox>();
+            ammoBoxScript.Open();
 
+            _inventoryManager.GetAmmoBox();
+            OnSwap?.Invoke(_curSlotIdx);
+        }
     }
     private void Drop()
     {
+        if (_isFire || _isReloading)
+        {
+            return;
+        }
+
         // 이벤트 해제
         _slots[_curSlotIdx].OnMuzzleFlash -= MuzzleFlashPlay;
         _slots[_curSlotIdx].OnBulletSpawn -= SpawnBullet;
@@ -302,7 +345,7 @@ public class WeaponManager : MonoBehaviour
 
         _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<None>();
 
-        OnPickup?.Invoke(_curSlotIdx);
+        OnSwap?.Invoke(_curSlotIdx);
 
     }
 }

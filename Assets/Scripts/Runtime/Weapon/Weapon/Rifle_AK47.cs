@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class AK47 : Weapon
 {
-
     private enum ReloadState
     {
         MagazineDrop,
@@ -32,18 +31,18 @@ public class AK47 : Weapon
 
         _audioSource = GetComponentInParent<AudioSource>();
 
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire01"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire02"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire03"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire04"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire05"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire_01"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire_02"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire_03"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire_04"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire_05"));
 
         _reloadDelays.Add(1f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload01"));
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload_01"));
         _reloadDelays.Add(1f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload02"));
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload_02"));
         _reloadDelays.Add(1.08f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload03"));
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload_03"));
 
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
 

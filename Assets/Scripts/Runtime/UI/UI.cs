@@ -20,6 +20,8 @@ public class UI : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _targetNameText;
     [SerializeField] private TextMeshProUGUI _targetInfoText;
     [SerializeField] private string _interactTagName01 = "Weapon";
+    [SerializeField] private string _interactTagName02 = "WeaponCase";
+    [SerializeField] private string _interactTagName03 = "AmmoCase";
 
     [Header("UI Weapon Slot")]
     [SerializeField] private Image _equipWeaponImage;
@@ -44,15 +46,21 @@ public class UI : MonoBehaviour
     [SerializeField] private Sprite _weaponSp01;
     [SerializeField] private Sprite _weaponSp02;
     [SerializeField] private Sprite _weaponSp03;
+    [SerializeField] private Sprite _weaponSp04;
+    [SerializeField] private Sprite _weaponSp05;
 
     [SerializeField] private Sprite _arBulletSp;
     [SerializeField] private Sprite _hgBulletSp;
+    [SerializeField] private Sprite _sgBulletSp;
+
+    [Header("Zoom View")]
+    [SerializeField] private GameObject _zoomGo;
 
     #region Field
     private string _targetName;
     private StringBuilder _info = new StringBuilder(100);
     // 둘이 세트
-    private GameObject _curInteractWeapon;
+    private GameObject _curInteractObject;
     private Weapon _curWeaponScript;
 
     // Player Status
@@ -79,7 +87,7 @@ public class UI : MonoBehaviour
     #endregion
 
     #region Property
-    public GameObject InteractWeapon => _curInteractWeapon;
+    public GameObject InteractWeapon => _curInteractObject;
     public Weapon InteractWeaponScript => _curWeaponScript;
     #endregion
 
@@ -103,6 +111,7 @@ public class UI : MonoBehaviour
         _cameraManager.OnInteract += GetInteractInfo;
         _weaponManager.OnSetWeapon += SetWeapon;
         _weaponManager.CurrentSlot.OnSetAmmo += SetAmmo;
+        _player.OnZoom += ZoomMode;
         _player.OnSetHealth += SetHealth;
         _player.OnSetStemina += SetStemina;
     }
@@ -124,6 +133,7 @@ public class UI : MonoBehaviour
                 inventoryAmmo = _inventory.AmmoAR;
                 break;
             case Weapon.WeaponType.Shotgun:
+                inventoryAmmo = _inventory.AmmoSG;
                 break;
             case Weapon.WeaponType.Melee:
                 break;
@@ -137,51 +147,66 @@ public class UI : MonoBehaviour
         _curWeaponInventoryAmmoText.text = inventoryAmmo.ToString();
 
     }
-    public void GetInteractInfo(GameObject hitObject)
+    private void GetInteractInfo(GameObject hitObject)
     {
-        if(hitObject != _curInteractWeapon)
+        if (hitObject != _curInteractObject)
         {
             _interactInfo.SetActive(false);
             _interactLine.SetActive(false);
             _info.Clear();
+            _curInteractObject = null;
+            _curWeaponScript = null;
         }
 
         if (hitObject == null)
         {
             _interactInfo.SetActive(false);
             _interactLine.SetActive(false);
-            _curInteractWeapon = null;
+            _curInteractObject = null;
             _curWeaponScript = null;
             _info.Clear();
         }
         else
         {
-            if (hitObject.tag == _interactTagName01)
+
+            if (_curInteractObject == null)
             {
-                if (_curInteractWeapon == null)
+                _curInteractObject = hitObject;
+                _interactLine.SetActive(true);
+                _lineImage.fillAmount = 0;
+                _targetInfoBackgroundImage.fillAmount = 0;
+
+                try
                 {
-                    _curInteractWeapon = hitObject;
                     _curWeaponScript = hitObject.GetComponent<Weapon>();
-                    _interactLine.SetActive(true);
-                    _lineImage.fillAmount = 0;
-                    _targetInfoBackgroundImage.fillAmount = 0;
                 }
-                // 계속 쳐다보면 라인이 늘어나면서 완료되면 info가 보이도록
-                else
+                catch(Exception)
                 {
-                    _lineImage.fillAmount = Mathf.Lerp(_lineImage.fillAmount, 1, 1f - Mathf.Exp(-10 * Time.deltaTime));
+                    CPrint.Log("무기가 아닌 대상 상호작용");
+                    // 무기가 아닐 경우 오류가 날 수밖에 없습니다.
+                    // 근데 무기를 상호작용 메세지가 뜨기 전에 줍고 싶은 경우가 있기 때문에
+                    // Try Catch로 잡았습니다.
+                }
+            }
+            // 계속 쳐다보면 라인이 늘어나면서 완료되면 info가 보이도록
+            else
+            {
+                _lineImage.fillAmount = Mathf.Lerp(_lineImage.fillAmount, 1, 1f - Mathf.Exp(-10 * Time.deltaTime));
 
-                    if(_lineImage.fillAmount >= 0.95 && _lineImage.fillAmount <= 1)
+                if (_lineImage.fillAmount >= 0.95 && _lineImage.fillAmount <= 1)
+                {
+                    _lineImage.fillAmount = 1;
+
+                    _targetInfoBackgroundImage.fillAmount = Mathf.Lerp(_targetInfoBackgroundImage.fillAmount, 1, 1f - Mathf.Exp(-10 * Time.deltaTime));
+
+                    if (_targetInfoBackgroundImage.fillAmount >= 0.95 && _targetInfoBackgroundImage.fillAmount < 1)
                     {
-                        _lineImage.fillAmount = 1;
+                        _targetInfoBackgroundImage.fillAmount = 1;
 
-                        _targetInfoBackgroundImage.fillAmount = Mathf.Lerp(_targetInfoBackgroundImage.fillAmount, 1, 1f - Mathf.Exp(-10 * Time.deltaTime));
 
-                        if (_targetInfoBackgroundImage.fillAmount >= 0.95 && _targetInfoBackgroundImage.fillAmount < 1)
+                        // 무기 오브젝트면 정보 받아오게
+                        if (hitObject.CompareTag(_interactTagName01))
                         {
-                            _targetInfoBackgroundImage.fillAmount = 1;
-
-
                             _targetName = _curWeaponScript.Name;
                             _info.Append($"공격력 : {_curWeaponScript.Damage}\n");
                             _info.Append($"연사력 : {_curWeaponScript.FireDelay}\n");
@@ -189,19 +214,33 @@ public class UI : MonoBehaviour
 
                             _targetNameText.text = _targetName;
                             _targetInfoText.text = _info.ToString();
-                            _interactInfo.SetActive(true);
                         }
+                        else if (hitObject.CompareTag(_interactTagName02))
+                        {
+                            _targetName = "아이템 상자";
+                            _info.Append("아이템들을 담아둔 상자입니다.\n");
+                            _info.Append("생존에 도움될만한 것들을 찾을 수 있습니다.");
+
+                            _targetNameText.text = _targetName;
+                            _targetInfoText.text = _info.ToString();
+                        }
+                        else if(hitObject.CompareTag(_interactTagName03))
+                        {
+                            _targetName = "탄약 상자";
+                            _info.Append("다양한 탄약들을 담아둔 상자입니다.\n");
+
+                            _targetNameText.text = _targetName;
+                            _targetInfoText.text = _info.ToString();
+
+                        }
+
+                        _interactInfo.SetActive(true);
                     }
                 }
-
-            }
-            else
-            {
-
             }
         }
     }
-    public void SetWeapon(int index, Weapon weapon)
+    private void SetWeapon(int index, Weapon weapon)
     {
         _weaponManager.CurrentSlot.OnSetAmmo -= SetAmmo;
 
@@ -228,6 +267,14 @@ public class UI : MonoBehaviour
             case 3:
                 selectWeaponSprite = _weaponSp03;
                 selectBulletSprite = _hgBulletSp;
+                break;
+            case 4:
+                selectWeaponSprite = _weaponSp04;
+                selectBulletSprite = _sgBulletSp;
+                break;
+            case 5:
+                selectWeaponSprite = _weaponSp05;
+                selectBulletSprite = _arBulletSp;
                 break;
         }
 
@@ -258,8 +305,9 @@ public class UI : MonoBehaviour
 
         weapon.OnSetAmmo += SetAmmo;
         SetAmmo(weapon.GetWeaponType, weapon.Ammo);
+        ZoomMode(false);
     }
-    public void SetHealth(float health, float healthMax)
+    private void SetHealth(float health, float healthMax)
     {
         _health = health;
         _healthMax = healthMax;
@@ -270,7 +318,7 @@ public class UI : MonoBehaviour
         float clamp01 = Mathf.Clamp01(_health / _healthMax);
         _healthBar.fillAmount = clamp01;
     }
-    public void SetStemina(float stemina, float steminaMax)
+    private void SetStemina(float stemina, float steminaMax)
     {
         _stemina = stemina;
         _steminaMax = steminaMax;
@@ -281,11 +329,44 @@ public class UI : MonoBehaviour
         float clamp01 = Mathf.Clamp01(_stemina / _steminaMax);
         _steminaBar.fillAmount = clamp01;
     }
+    private void ZoomMode(bool isRightClick)
+    {
+        if(!_weaponManager.CurrentCanZoom)
+        {
+            return;
+        }
+
+
+        if (isRightClick)
+        {
+            if (!_zoomGo.activeSelf)
+            {
+                _zoomGo.SetActive(true);
+                Camera.main.fieldOfView = 20;
+            }
+
+        }
+        else
+        {
+            if (_zoomGo.activeSelf)
+            {
+                _zoomGo.SetActive(false);
+                Camera.main.fieldOfView = 60;
+            }
+        }
+    }
     private void OnGUI()
     {
         #region CrossHair
-        // 크로스헤어
 
+        // 줌 모드일땐 기본 크로스 헤어 출력 금지
+        if (_zoomGo.activeSelf)
+        {
+            return;
+        }
+
+        
+        // 크로스헤어
         if (_box == null)
         {
             _box = new GUIStyle(GUI.skin.box);

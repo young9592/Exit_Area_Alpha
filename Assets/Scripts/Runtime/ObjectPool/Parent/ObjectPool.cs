@@ -26,6 +26,8 @@ public class ObjectPool : MonoBehaviour
     protected readonly HashSet<GameObject> _pooledPrefab = new HashSet<GameObject>();
     // 현재 프리펩 생명주기
     protected readonly Dictionary<GameObject, float> _lifeMap = new Dictionary<GameObject, float>();
+    // 생명주기 사용 여부
+    protected bool _lifeMapUse = true;
     // 활성화된 프리펩
     protected readonly List<GameObject> _alivePrefab = new List<GameObject>();
     // 프리펩 하이어라키 정리
@@ -167,6 +169,12 @@ public class ObjectPool : MonoBehaviour
                 RemoveLifeIfExists(userPrefab);
 
                 continue;
+            }
+
+            // 수명장부 사용 안할 시
+            if (!_lifeMapUse)
+            {
+                return;
             }
 
             // 수명 장부에 없는지 체크

@@ -5,10 +5,10 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/RemoteControl.unity
     guid: 1691d7bb943101b42821d0b92c778900
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/Title.unity
     guid: 64954c13522acfd4988a3b8f6654a31d
   - enabled: 1

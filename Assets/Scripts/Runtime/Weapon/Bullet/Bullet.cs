@@ -104,22 +104,22 @@ public class Bullet : MonoBehaviour
 
             float multiply = 1f;
 
-            if (hit.collider.tag == _tagHead)
+            if (hit.collider.CompareTag(_tagHead))
             {
                 multiply = _headMultiply;
                 CPrint.Log("Head Hit");
             }
-            else if (hit.collider.tag == _tagBody)
+            else if (hit.collider.CompareTag(_tagBody))
             {
                 multiply = _bodyMultiply;
                 CPrint.Log("Body Hit");
             }
-            else if (hit.collider.tag == _tagArm)
+            else if (hit.collider.CompareTag(_tagArm))
             {
                 multiply = _armMultiply;
                 CPrint.Log("Arm Hit");
             }
-            else if (hit.collider.tag == _tagLeg)
+            else if (hit.collider.CompareTag(_tagLeg))
             {
                 multiply = _legMultiply;
                 CPrint.Log("Leg Hit");

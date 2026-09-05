@@ -16,6 +16,8 @@ public abstract class Zombie : MonoBehaviour
     [SerializeField] protected float _ATKHitDuration = 0.5f;
     [SerializeField] protected float _attackDistance = 2f;
     [SerializeField] protected float _moveSpeedMax = 3f;
+    [SerializeField] protected float _jumpHeight = 3.5f;
+    [SerializeField] protected float _jumpDelay = 4f;
     [SerializeField] protected float _detectDistance = 10f;
     // 지금 게임 상황에 따라 빠지게 되었습니다.
     //[SerializeField] protected float _detectDuration = 10f;
@@ -23,11 +25,19 @@ public abstract class Zombie : MonoBehaviour
 
     [Header("RigidBody")]
     [SerializeField] protected float _groundStick = -2.0f;
+    [SerializeField] protected float _gravity = -9.8f;
+    [SerializeField] protected float _fallResetVelocity = -18f;
     #endregion
-    
+
     #region Field
     protected static int _count = 0;
     protected static bool _isAlertMode = false;
+    protected bool _doJump = false;
+    protected bool _isDead = false;
+    #endregion
+
+    #region Property
+    public static int GetSpawnCount => _count;
     #endregion
 
     protected abstract void ChangeState();
@@ -48,6 +58,8 @@ public abstract class Zombie : MonoBehaviour
         _count++;
 
         CPrint.Log($"현재 생존한 좀비의 수 : {_count}마리");
+
+        _isDead = false;
     }
 
     protected virtual void OnDisable()
@@ -57,10 +69,10 @@ public abstract class Zombie : MonoBehaviour
         CPrint.Log($"현재 생존한 좀비의 수 : {_count}마리");
 
         // 모두 죽으면 경계모드 해제
-        if (_count == 0)
+        if (_isAlertMode && _count == 0)
         {
             _isAlertMode = false;
-            CPrint.Log($"경계모드 해제");
+            CPrint.Log($"경계모드 : {_isAlertMode}");
         }
     }
 }

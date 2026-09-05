@@ -9,6 +9,8 @@ TagManager:
   - Hit_Arm
   - Hit_Leg
   - Weapon
+  - WeaponCase
+  - AmmoCase
   layers:
   - Default
   - TransparentFX
@@ -18,9 +20,9 @@ TagManager:
   - UI
   - Enemy
   - Item
-  - 
-  - 
-  - 
+  - Slider
+  - Block
+  - Box
   - 
   - 
   - 

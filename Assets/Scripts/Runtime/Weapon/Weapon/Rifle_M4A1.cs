@@ -31,18 +31,18 @@ public class M4A1 : Weapon
 
         _audioSource = GetComponentInParent<AudioSource>();
 
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire01"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire02"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire03"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire04"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire05"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_01"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_02"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_03"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_04"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_05"));
 
         _reloadDelays.Add(1f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload01"));
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload_01"));
         _reloadDelays.Add(1f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload02"));
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload_02"));
         _reloadDelays.Add(1.08f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload03"));
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload_03"));
 
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
 

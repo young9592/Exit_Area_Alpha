@@ -79,6 +79,8 @@ public abstract class Weapon : MonoBehaviour
     protected CTimer _fireDelayTimer = new CTimer();
     protected CTimer _reloadDelayTimer = new CTimer();
     protected AudioClip _empty = null;
+
+    protected bool _canZoom;
     #endregion
 
     #region Property
@@ -102,6 +104,7 @@ public abstract class Weapon : MonoBehaviour
     public bool CompliteFire => _completeFire;
     public bool CompliteReload => _completeReload;
     public int ReturnAmmo => _returnAmmo;
+    public bool CanZoom => _canZoom;
     #endregion
 
 

@@ -1,7 +1,8 @@
 using UnityEngine;
 
-public class Walker : Zombie
+public class Runner : Zombie
 {
+
     public enum State
     {
         Idle,
@@ -306,7 +307,6 @@ public class Walker : Zombie
             }
 
         }
-
     }
     // 점프를 해서 걸림돌을 넘어가도록 유도
     private void CheckBlockingState()
@@ -329,7 +329,7 @@ public class Walker : Zombie
         }
 
         int layerMask = LayerMask.GetMask("Block");
-        Physics.Raycast(transform.position + transform.up * 0.1f, transform.forward, out RaycastHit hit, 0.5f, layerMask);
+        Physics.Raycast(transform.position + transform.up * 0.1f, transform.forward, out RaycastHit hit, 1f, layerMask);
 
         if (hit.collider == null)
         {
@@ -393,3 +393,4 @@ public class Walker : Zombie
         Gizmos.DrawRay(transform.position, rightDir * 3f);
     }
 }
+

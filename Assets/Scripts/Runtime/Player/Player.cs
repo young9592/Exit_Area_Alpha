@@ -8,9 +8,10 @@ public partial class Player : MonoBehaviour
     public event Action<float, float> OnSetHealth;
     public event Action<float, float> OnSetStemina;
 
-    // 무기 줍기 및 버리기
-    public event Action OnPickup;
+    // 상호작용 및 버리기
+    public event Action OnInteract;
     public event Action OnDrop;
+    public event Action<bool> OnZoom;
 
     #region Inspector
     [Header("Manager")]
@@ -56,11 +57,12 @@ public partial class Player : MonoBehaviour
     [SerializeField] private string _keyMouseY = "Mouse Y";
 
     [SerializeField] private KeyCode _keyFire = KeyCode.Mouse0;
+    [SerializeField] private KeyCode _keyZoom = KeyCode.Mouse1;
     [SerializeField] private KeyCode _keyReload = KeyCode.R;
     [SerializeField] private KeyCode _keyJump = KeyCode.Space;
     [SerializeField] private KeyCode _keySprint = KeyCode.LeftShift;
 
-    [SerializeField] private KeyCode _keyPickup = KeyCode.F;
+    [SerializeField] private KeyCode _keyInteract = KeyCode.F;
     [SerializeField] private KeyCode _keyDrop = KeyCode.G;
     #endregion
 
@@ -86,6 +88,8 @@ public partial class Player : MonoBehaviour
     // 마우스 이동
     private float _mouseX;
     private float _mouseY;
+
+    private bool _doZoomState = false;
 
     // 해시변환
     private int _hashAnimationMoveSpeed;
@@ -159,7 +163,7 @@ public partial class Player : MonoBehaviour
 
         _weaponManager.OnFire += SuccessFireDelay;
         _weaponManager.OnReload += SuccessReload;
-        _weaponManager.OnPickup += InitSwap;
+        _weaponManager.OnSwap += InitSwap;
     }
 
     private void Start()
@@ -200,10 +204,12 @@ public partial class Player : MonoBehaviour
 
 
         Move();
+        SliderHead();
         Fire();
+        Zoom();
         Reload();
         Swap();
-        PickUp();
+        Interact();
         Drop();
         RecoverStemina();
     }
@@ -259,8 +265,8 @@ public partial class Player : MonoBehaviour
         float mx = Input.GetAxis(_keyMouseX);
         float my = Input.GetAxis(_keyMouseY);
 
-        _mouseX += mx * _mouseSensitivity;
-        _mouseY -= my * _mouseSensitivity;
+        _mouseX += mx * _mouseSensitivity * (_doZoomState ? 0.5f : 1f);
+        _mouseY -= my * _mouseSensitivity * (_doZoomState ? 0.5f : 1f);
 
         _mouseY = Mathf.Clamp(_mouseY, _mousePitchMin, _mousePitchMax);
 
@@ -305,7 +311,7 @@ public partial class Player : MonoBehaviour
 
         // 3. 이동 속도
         bool sprintKeyDown = Input.GetKey(_keySprint);
-        float speed = _walkSpeed * (sprintKeyDown && _stemina != 0 ? _sprintMultiply : 1f);
+        float speed = _walkSpeed * (sprintKeyDown && _stemina != 0 ? _sprintMultiply : 1f) * (_doZoomState ? 0.5f : 1f);
 
         // 4. 점프
         // 업데이트에서 한번만 체크해서 넘긴다.
@@ -407,8 +413,8 @@ public partial class Player : MonoBehaviour
             }
         }
     }
-    // 아이템 줍기
-    private void PickUp()
+    // 아이템 상호작용
+    private void Interact()
     {
         // 애니메이션 안정성
         if (_doJump || _jumpDelayTimer.GetCurrentTimerState)
@@ -416,9 +422,9 @@ public partial class Player : MonoBehaviour
             return;
         }
 
-        if (Input.GetKeyDown(_keyPickup))
+        if (Input.GetKeyDown(_keyInteract))
         {
-            OnPickup?.Invoke();
+            OnInteract?.Invoke();
         }
     }
     // 아이템 버리기
@@ -433,6 +439,20 @@ public partial class Player : MonoBehaviour
         if (Input.GetKeyDown(_keyDrop))
         {
             OnDrop?.Invoke();
+        }
+    }
+    // 줌 가능한 무기인가?
+    private void Zoom()
+    {
+        if (Input.GetKey(_keyZoom))
+        {
+            _doZoomState = true;
+            OnZoom?.Invoke(_doZoomState);
+        }
+        else if(!Input.GetKey(_keyZoom))
+        {
+            _doZoomState = false;
+            OnZoom?.Invoke(_doZoomState);
         }
     }
     // 초기 0번 슬롯 무기 착용
@@ -500,5 +520,33 @@ public partial class Player : MonoBehaviour
             _rig.enabled = false;
             _isDead = true;
         }
+    }
+    // 좀비 머리 위에서 놀면 안돼..
+    private void SliderHead()
+    {
+        int layerMask = LayerMask.GetMask("Slider");
+
+        Debug.DrawRay(transform.position + transform.up * 1.5f, Vector3.down * 2f,Color.red);
+
+        Physics.Raycast(transform.position + transform.up, Vector3.down, out RaycastHit hit, 2f, layerMask);
+
+        if (hit.collider == null)
+        {
+            return;
+        }
+
+        Debug.Log("머리위 미끄러짐 작동중");
+
+        Vector3 moveVec = transform.position - hit.collider.transform.position;
+        moveVec.y = 0f;
+
+        if(moveVec.magnitude <= 0.001f)
+        {
+            moveVec = Vector3.forward;
+        }
+
+        Vector3 totalVec = moveVec.normalized * 30f + Vector3.down * 2f;
+
+        _controller.Move(totalVec * Time.deltaTime);
     }
 }

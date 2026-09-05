@@ -3,19 +3,24 @@ using UnityEngine;
 public class Inventory : MonoBehaviour
 {
     #region Inspector
-    // private Item _itemSlot = new Item[15];
-
+    // Hand
     [SerializeField] private int _noneType = 0;
-    [SerializeField] private int _arAmmo = 300;
-    [SerializeField] private int _arAmmoMax = 300;
+    // 소총
+    [SerializeField] private int _arAmmo = 240;
+    [SerializeField] private int _arAmmoMax = 240;
+    // 권총
     [SerializeField] private int _hgAmmo = 160;
     [SerializeField] private int _hgAmmoMax = 160;
+    // 샷건
+    [SerializeField] private int _sgAmmo = 60;
+    [SerializeField] private int _sgAmmoMax = 60;
     #endregion
 
     #region Property
     public int NoneType => _noneType;
     public int AmmoAR => _arAmmo;
     public int AmmoHG => _hgAmmo;
+    public int AmmoSG => _sgAmmo;
     #endregion
 
     // 부족한 총알만큼 받아오기
@@ -36,6 +41,7 @@ public class Inventory : MonoBehaviour
                 GetTypeAmmo(ref _arAmmo, requireAmmo, out returnAmmo);
                 break;
             case Weapon.WeaponType.Shotgun:
+                GetTypeAmmo(ref _sgAmmo, requireAmmo, out returnAmmo);
                 break;
             case Weapon.WeaponType.Melee:
                 break;
@@ -55,22 +61,23 @@ public class Inventory : MonoBehaviour
         {
             returnAmmo = 0;
         }
-        else if (_arAmmo >= requireAmmo)
+        else if (ammo >= requireAmmo)
         {
             returnAmmo = requireAmmo;
-            _arAmmo -= requireAmmo;
+            ammo -= requireAmmo;
         }
-        else if (_arAmmo < requireAmmo)
+        else if (ammo < requireAmmo)
         {
-            returnAmmo = _arAmmo;
-            _arAmmo = 0;
+            returnAmmo = ammo;
+            ammo = 0;
         }
     }
 
-    // 레포데처럼 풀로 채우겠다.
-    public void GetAmmo()
+    // Ammo Recharge
+    public void GetAmmoBox()
     {
         _arAmmo = _arAmmoMax;
         _hgAmmo = _hgAmmoMax;
+        _sgAmmo = _sgAmmoMax;
     }
 }
