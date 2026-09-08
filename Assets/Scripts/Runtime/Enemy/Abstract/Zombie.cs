@@ -14,19 +14,17 @@ public abstract class Zombie : MonoBehaviour
     [SerializeField] protected float _damage = 5f;
     [SerializeField] protected float _ATKDelay = 3f;
     [SerializeField] protected float _ATKHitDuration = 0.5f;
-    [SerializeField] protected float _attackDistance = 2f;
+    [SerializeField] protected float _attackDistance = 1.5f;
     [SerializeField] protected float _moveSpeedMax = 3f;
     [SerializeField] protected float _jumpHeight = 3.5f;
     [SerializeField] protected float _jumpDelay = 4f;
     [SerializeField] protected float _detectDistance = 10f;
-    // 지금 게임 상황에 따라 빠지게 되었습니다.
-    //[SerializeField] protected float _detectDuration = 10f;
     [SerializeField] protected float _landingDelay = 1.5f;
 
     [Header("RigidBody")]
     [SerializeField] protected float _groundStick = -2.0f;
     [SerializeField] protected float _gravity = -9.8f;
-    [SerializeField] protected float _fallResetVelocity = -18f;
+    [SerializeField] protected float _fallingCheckSpeed = -3f;
     #endregion
 
     #region Field
@@ -44,12 +42,26 @@ public abstract class Zombie : MonoBehaviour
     protected abstract void UpdateState();
     public abstract void TakeDamage(float damage);
 
-    protected void Start()
+    private void Reset()
+    {
+        _animator = GetComponent<Animator>();
+        _controller = GetComponent<CharacterController>();
+    }
+    private void Start()
     {
         if(_playerTr == null)
         {
             _playerTr = Player.PlayerTr;
         }
+
+        #region NullCheck
+        if(_playerTr == null || _animator == null || _controller == null)
+        {
+            CPrint.Error("Zombie.cs Null Find.");
+            enabled = false;
+            return;
+        }
+        #endregion
     }
 
     protected virtual void OnEnable()
@@ -74,5 +86,17 @@ public abstract class Zombie : MonoBehaviour
             _isAlertMode = false;
             CPrint.Log($"경계모드 : {_isAlertMode}");
         }
+    }
+
+    protected virtual void Update()
+    {
+        #region NullCheck
+        if (_playerTr == null || _animator == null || _controller == null)
+        {
+            CPrint.Error("Zombie.cs Null Find.");
+            enabled = false;
+            return;
+        }
+        #endregion
     }
 }

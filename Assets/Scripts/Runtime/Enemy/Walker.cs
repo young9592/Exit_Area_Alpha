@@ -29,8 +29,8 @@ public class Walker : Zombie
     [SerializeField] private BoxCollider _hitBoxHandR;
     [SerializeField] private BoxCollider _hitBoxLegL;
     [SerializeField] private BoxCollider _hitBoxLegR;
-    [SerializeField] private GameObject _ATKHitBox;
-    [SerializeField] private BoxCollider _SliderBox;
+    [SerializeField] private GameObject _attackHitBox;
+    [SerializeField] private BoxCollider _sliderBox;
 
     #region Field
     private State _curState = State.Idle;
@@ -47,7 +47,7 @@ public class Walker : Zombie
     private int _hashDead;
 
     // 공격 후 딜레이
-    private CTimer _ATKDelayTimer = new CTimer();
+    private CTimer _attackDelayTimer = new CTimer();
     // 공격 판정 충돌박스 삭제 시간
     private CTimer _ATKHitTimer = new CTimer();
     // 랜딩 모션 타이머
@@ -83,9 +83,39 @@ public class Walker : Zombie
         _hashJump = Animator.StringToHash(_paramJump);
         _hashDead = Animator.StringToHash(_paramDead);
         #endregion
+
+        #region NullCheck
+        if (_hitBoxHead == null || _hitBoxBody == null ||
+            _hitBoxArmL01 == null || _hitBoxArmL02 == null || _hitBoxHandL == null ||
+            _hitBoxArmR01 == null || _hitBoxArmR02 == null || _hitBoxHandR == null ||
+            _hitBoxLegL == null || _hitBoxLegR == null ||
+            _attackHitBox == null || _sliderBox == null
+            )
+        {
+            CPrint.Error("Walker.cs Null Find.");
+            enabled = false;
+            return;
+        }
+        #endregion
     }
-    private void Update()
+    protected override void Update()
     {
+        #region NullCheck
+        base.Update();
+
+        if (_hitBoxHead == null || _hitBoxBody == null ||
+            _hitBoxArmL01 == null || _hitBoxArmL02 == null || _hitBoxHandL == null ||
+            _hitBoxArmR01 == null || _hitBoxArmR02 == null || _hitBoxHandR == null ||
+            _hitBoxLegL == null || _hitBoxLegR == null ||
+            _attackHitBox == null || _sliderBox == null
+            )
+        {
+            CPrint.Error("Walker.cs Null Find.");
+            enabled = false;
+            return;
+        }
+        #endregion
+
         #region Timers
         if (_deadTimer.GetCurrentTimerState)
         {
@@ -98,12 +128,12 @@ public class Walker : Zombie
         {
             if (_ATKHitTimer.AddTimer())
             {
-                _ATKHitBox.SetActive(false);
+                _attackHitBox.SetActive(false);
             }
         }
-        if (_ATKDelayTimer.GetCurrentTimerState)
+        if (_attackDelayTimer.GetCurrentTimerState)
         {
-            _ATKDelayTimer.AddTimer();
+            _attackDelayTimer.AddTimer();
         }
         if (_jumpDelayTimer.GetCurrentTimerState)
         {
@@ -123,10 +153,10 @@ public class Walker : Zombie
             return;
         }
 
-        CheckBlockingState();
-        CheckGrounded();
         ChangeState();
         UpdateState();
+        CheckGrounded();
+        CheckBlockingState();
     }
     // 상태 변환
     protected override void ChangeState()
@@ -166,7 +196,7 @@ public class Walker : Zombie
             if (distance > attackDistanceSqr)
             {
 
-                if (!_ATKDelayTimer.GetCurrentTimerState)
+                if (!_attackDelayTimer.GetCurrentTimerState)
                 {
                     _curState = State.Trace;
                 }
@@ -179,7 +209,7 @@ public class Walker : Zombie
             }
             else if (distance <= attackDistanceSqr)
             {
-                if (!_ATKDelayTimer.GetCurrentTimerState)
+                if (!_attackDelayTimer.GetCurrentTimerState)
                 {
                     _curState = State.Attack;
                 }
@@ -231,14 +261,19 @@ public class Walker : Zombie
     }
     private void Attack()
     {
+        if (_doJump || _isFalling || _landingTimer.GetCurrentTimerState)
+        {
+            return;
+        }
+
         Vector3 moveDir = (_playerTr.position - transform.position).normalized;
         TargetRotate(moveDir, false);
 
-        Hit hitScript = _ATKHitBox.GetComponent<Hit>();
+        Hit hitScript = _attackHitBox.GetComponent<Hit>();
         hitScript.Initialize(_damage);
 
-        _ATKHitBox.SetActive(true);
-        _ATKDelayTimer.SetTimer(_ATKDelay);
+        _attackHitBox.SetActive(true);
+        _attackDelayTimer.SetTimer(_ATKDelay);
         _ATKHitTimer.SetTimer(_ATKHitDuration);
         _animator.SetTrigger(_hashAttack);
     }
@@ -273,7 +308,7 @@ public class Walker : Zombie
     {
         if (_controller.isGrounded)
         {
-            if (_isFalling)
+            if (_isFalling || _doJump)
             {
                 _animator.SetTrigger(_hashLand);
                 _landingTimer.SetTimer(_landingDelay);
@@ -290,23 +325,18 @@ public class Walker : Zombie
         }
         else
         {
-            if (!_isFalling && _controller.velocity.y <= -3f)
+            if (!_isFalling)
             {
-                _isFalling = true;
-                _animator.SetTrigger(_hashFalling);
-            }
-
-            // 중력 적용
-            _verticalVel += _gravity * Time.deltaTime;
-
-            // isGrounded이 인식 못할때 방지책
-            if (!_doJump && _controller.velocity.y <= 0.1f && _verticalVel <= _fallResetVelocity)
-            {
-                _verticalVel = 0f;
+                if(_controller.velocity.y <= _fallingCheckSpeed)
+                {
+                    _isFalling = true;
+                    _animator.SetTrigger(_hashFalling);
+                }
             }
 
         }
-
+        // 중력 적용
+        _verticalVel += _gravity * Time.deltaTime;
     }
     // 점프를 해서 걸림돌을 넘어가도록 유도
     private void CheckBlockingState()
@@ -321,9 +351,13 @@ public class Walker : Zombie
         {
             return;
         }
-
         // 점프 쿨타임
         if (_jumpDelayTimer.GetCurrentTimerState)
+        {
+            return;
+        }
+
+        if (_attackDelayTimer.GetCurrentTimerState)
         {
             return;
         }
@@ -376,7 +410,7 @@ public class Walker : Zombie
         _hitBoxHandR.enabled = toggle;
         _hitBoxLegL.enabled = toggle;
         _hitBoxLegR.enabled = toggle;
-        _SliderBox.enabled = toggle;
+        _sliderBox.enabled = toggle;
     }
     private void OnDrawGizmos()
     {
