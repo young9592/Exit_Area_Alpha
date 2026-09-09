@@ -49,7 +49,7 @@ public class WeaponManager : MonoBehaviour
 
     private bool _isFire = false;
     private bool _isReloading = false;
-    private int _curSlotIdx = 0;
+    private int _curSlotIdx = 3;
     #endregion
 
     #region Property
@@ -190,6 +190,12 @@ public class WeaponManager : MonoBehaviour
             return false;
         }
 
+        if(_curSlotIdx == index)
+        {
+            type = Weapon.HandType.None;
+            return false;
+        }
+
         // 핸드 트래커 위치 변경
         var data = _traker.data;
         data.target = _leftHandGo[_slots[index].ID];
@@ -210,6 +216,11 @@ public class WeaponManager : MonoBehaviour
         _curRecoil = _curSlotRecoilMin;
 
         OnSetWeapon?.Invoke(index, _slots[index]);
+
+        if (_slots[index].ID != 0)
+        {
+            SoundPlay(Resources.Load<AudioClip>("Sound/WeaponSwap"));
+        }
 
         _curSlotIdx = index;
 
@@ -239,7 +250,7 @@ public class WeaponManager : MonoBehaviour
         }
 
 
-        GameObject interactObject = _uiManager.InteractWeapon;
+        GameObject interactObject = _uiManager.InteractObject;
 
         if (interactObject == null)
         {
@@ -247,7 +258,7 @@ public class WeaponManager : MonoBehaviour
         }
 
         // 무기교체인 경우
-        if (interactObject.CompareTag("Weapon"))
+        if (interactObject.CompareTag(_uiManager.InteractTagName01))
         {
             Weapon interactWeaponScript = _uiManager.InteractWeaponScript;
 
@@ -305,18 +316,32 @@ public class WeaponManager : MonoBehaviour
 
             OnSwap?.Invoke(_curSlotIdx);
         }
-        else if(interactObject.CompareTag("WeaponCase"))
+        else if(interactObject.CompareTag(_uiManager.InteractTagName02))
         {
             ItemBox weaponCaseScript = interactObject.GetComponent<ItemBox>();
             weaponCaseScript.Open();
+
+            int layerMask = LayerMask.NameToLayer("OnlyPlayerBlock");
+            interactObject.layer = layerMask;
+            SoundPlay(Resources.Load<AudioClip>("Sound/ItemBoxOpen"));
         }
-        else if (interactObject.CompareTag("AmmoCase"))
+        else if (interactObject.CompareTag(_uiManager.InteractTagName03))
         {
             AmmoBox ammoBoxScript = interactObject.GetComponent<AmmoBox>();
             ammoBoxScript.Open();
 
             _inventoryManager.GetAmmoBox();
             OnSwap?.Invoke(_curSlotIdx);
+
+            int layerMask = LayerMask.NameToLayer("OnlyPlayerBlock");
+            interactObject.layer = layerMask;
+            SoundPlay(Resources.Load<AudioClip>("Sound/AmmoBoxOpen"));
+        }
+
+        else if (interactObject.CompareTag(_uiManager.InteractTagName04))
+        {
+            SoundPlay(Resources.Load<AudioClip>("Sound/BarricadeBreak"));
+            interactObject.SetActive(false);
         }
     }
     private void Drop()

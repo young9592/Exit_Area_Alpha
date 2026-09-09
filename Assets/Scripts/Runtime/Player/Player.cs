@@ -34,6 +34,7 @@ public partial class Player : MonoBehaviour
     [SerializeField] private string _paramFire = "tFire";
     [SerializeField] private string _paramFireDelay = "bFireDelay";
     [SerializeField] private string _paramReload = "tReload";
+    [SerializeField] private string _paramSwap = "tSwap";
 
     [SerializeField] private string _paramDead = "tDead";
 
@@ -76,6 +77,11 @@ public partial class Player : MonoBehaviour
     // 현재 점프중인가?
     private bool _doJump;
 
+    // 무기 스왑 애니메이션 쿨타임
+    private CTimer _swapDelayTimer = new CTimer();
+    private float _swapDelay = 0.7f;
+    private Weapon.HandType _type;
+
     // 최근 달렸나?
     private bool _curentRun;
     private CTimer _steminaRecoverTimer = new CTimer();
@@ -101,6 +107,7 @@ public partial class Player : MonoBehaviour
     private int _hashFire;
     private int _hashFireDelay;
     private int _hashReload;
+    private int _hashSwap;
     private int _hashDead;
     #endregion
 
@@ -156,6 +163,7 @@ public partial class Player : MonoBehaviour
         _hashReload = Animator.StringToHash(_paramReload);
         _hashJump = Animator.StringToHash(_paramJump);
         _hashLand = Animator.StringToHash(_paramLand);
+        _hashSwap = Animator.StringToHash(_paramSwap);
         _hashDead = Animator.StringToHash(_paramDead);
         #endregion
 
@@ -199,6 +207,13 @@ public partial class Player : MonoBehaviour
             if (_steminaRecoverTimer.AddTimer())
             {
                 _curentRun = false;
+            }
+        }
+        if (_swapDelayTimer.GetCurrentTimerState)
+        {
+            if (_swapDelayTimer.AddTimer())
+            {
+                _rig.enabled = _type != Weapon.HandType.None;
             }
         }
 
@@ -353,6 +368,11 @@ public partial class Player : MonoBehaviour
     }
     private void Fire()
     {
+        if (_swapDelayTimer.GetCurrentTimerState)
+        {
+            return;
+        }
+
         if (Input.GetKey(_keyFire))
         {
             if (_weaponManager.Fire())
@@ -364,6 +384,11 @@ public partial class Player : MonoBehaviour
     }
     private void Reload()
     {
+        if (_swapDelayTimer.GetCurrentTimerState)
+        {
+            return;
+        }
+
         if (Input.GetKeyDown(_keyReload))
         {
             if (_weaponManager.Reload())
@@ -376,7 +401,7 @@ public partial class Player : MonoBehaviour
     private void Swap()
     {
         // 애니메이션 안정성
-        if (_doJump || _jumpDelayTimer.GetCurrentTimerState)
+        if (_doJump || _jumpDelayTimer.GetCurrentTimerState || _swapDelayTimer.GetCurrentTimerState)
         {
             return;
         }
@@ -385,21 +410,27 @@ public partial class Player : MonoBehaviour
         {
             if (_weaponManager.SelectSlot(0, out Weapon.HandType type))
             {
+
                 // 슬롯 0번
                 // rigbuilder를 새로 껐다 켜줘야 손이 맞는 방향으로 간다.
                 _rig.enabled = false;
-                _rig.enabled = type != Weapon.HandType.None;
+                _swapDelayTimer.SetTimer(_swapDelay);
                 _animator.SetInteger(_hashHandState, (int)type);
+                _animator.SetTrigger(_hashSwap);
+                _type = type;
             }
         }
         else if (Input.GetKeyDown(_keySlot02))
         {
             if (_weaponManager.SelectSlot(1, out Weapon.HandType type))
             {
+
                 // 슬롯 1번
                 _rig.enabled = false;
-                _rig.enabled = type != Weapon.HandType.None;
+                _swapDelayTimer.SetTimer(_swapDelay);
                 _animator.SetInteger(_hashHandState, (int)type);
+                _animator.SetTrigger(_hashSwap);
+                _type = type;
             }
         }
         else if (Input.GetKeyDown(_keySlot03))
@@ -408,8 +439,10 @@ public partial class Player : MonoBehaviour
             {
                 // 슬롯 2번
                 _rig.enabled = false;
-                _rig.enabled = type != Weapon.HandType.None;
+                _swapDelayTimer.SetTimer(_swapDelay);
                 _animator.SetInteger(_hashHandState, (int)type);
+                _animator.SetTrigger(_hashSwap);
+                _type = type;
             }
         }
     }
@@ -417,7 +450,7 @@ public partial class Player : MonoBehaviour
     private void Interact()
     {
         // 애니메이션 안정성
-        if (_doJump || _jumpDelayTimer.GetCurrentTimerState)
+        if (_doJump || _jumpDelayTimer.GetCurrentTimerState || _swapDelayTimer.GetCurrentTimerState)
         {
             return;
         }
@@ -431,7 +464,7 @@ public partial class Player : MonoBehaviour
     private void Drop()
     {
         // 애니메이션 안정성
-        if (_doJump || _jumpDelayTimer.GetCurrentTimerState)
+        if (_doJump || _jumpDelayTimer.GetCurrentTimerState || _swapDelayTimer.GetCurrentTimerState)
         {
             return;
         }
@@ -444,6 +477,11 @@ public partial class Player : MonoBehaviour
     // 줌 가능한 무기인가?
     private void Zoom()
     {
+        if (_swapDelayTimer.GetCurrentTimerState)
+        {
+            return;
+        }
+
         if (Input.GetKey(_keyZoom))
         {
             _doZoomState = true;
@@ -458,11 +496,16 @@ public partial class Player : MonoBehaviour
     // 초기 0번 슬롯 무기 착용
     private void InitSwap(int index)
     {
-        if (_weaponManager.SelectSlot(index, out Weapon.HandType type))
+        _weaponManager.SelectSlot(3, out Weapon.HandType type);
+        _rig.enabled = false;    
+        _animator.SetInteger(_hashHandState, (int)type);
+        
+        if (_weaponManager.SelectSlot(index, out type))
         {
-            _rig.enabled = false;
-            _rig.enabled = type != Weapon.HandType.None;
+            _swapDelayTimer.SetTimer(_swapDelay);
             _animator.SetInteger(_hashHandState, (int)type);
+            _animator.SetTrigger(_hashSwap);
+            _type = type;
         }
     }
     // 발사완료 트리거

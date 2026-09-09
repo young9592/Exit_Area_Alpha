@@ -16,6 +16,11 @@ public class AK47 : Weapon
     {
         _id = 2;
         _name = "AK47";
+        _infomation =
+            $"°ø°Ý·Â : {_damage}\n" +
+            $"¿¬»ç·Â : {_fireDelay}\n" +
+            $"ÀåÅº¼ö : {_magazine}¹ß\n" +
+            "»ç¿ë ÅºÈ¯ : ¼ÒÃÑÅº";
         _damage = 7f;
         _fireDelay = 0.1f;
         _recoil = 1.25f;

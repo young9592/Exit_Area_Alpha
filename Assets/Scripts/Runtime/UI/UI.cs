@@ -15,6 +15,8 @@ public class UI : MonoBehaviour
     [Header("UI Interact View")]
     [SerializeField] private GameObject _interactInfo;
     [SerializeField] private GameObject _interactLine;
+    [SerializeField] private GameObject _interactKey;
+    [SerializeField] private TextMeshProUGUI _interactKeyText;
     [SerializeField] private Image _lineImage;
     [SerializeField] private Image _targetInfoBackgroundImage;
     [SerializeField] private TextMeshProUGUI _targetNameText;
@@ -22,6 +24,8 @@ public class UI : MonoBehaviour
     [SerializeField] private string _interactTagName01 = "Weapon";
     [SerializeField] private string _interactTagName02 = "WeaponCase";
     [SerializeField] private string _interactTagName03 = "AmmoCase";
+    [SerializeField] private string _interactTagName04 = "StageLine";
+    [SerializeField] private string _interactTagName05 = "Item";
 
     [Header("UI Weapon Slot")]
     [SerializeField] private Image _equipWeaponImage;
@@ -87,8 +91,13 @@ public class UI : MonoBehaviour
     #endregion
 
     #region Property
-    public GameObject InteractWeapon => _curInteractObject;
+    public GameObject InteractObject => _curInteractObject;
     public Weapon InteractWeaponScript => _curWeaponScript;
+
+    public string InteractTagName01 => _interactTagName01;
+    public string InteractTagName02 => _interactTagName02;
+    public string InteractTagName03 => _interactTagName03;
+    public string InteractTagName04 => _interactTagName04;
     #endregion
 
     private void Awake()
@@ -153,6 +162,7 @@ public class UI : MonoBehaviour
         {
             _interactInfo.SetActive(false);
             _interactLine.SetActive(false);
+            _interactKey.SetActive(false);
             _info.Clear();
             _curInteractObject = null;
             _curWeaponScript = null;
@@ -162,6 +172,7 @@ public class UI : MonoBehaviour
         {
             _interactInfo.SetActive(false);
             _interactLine.SetActive(false);
+            _interactKey.SetActive(false);
             _curInteractObject = null;
             _curWeaponScript = null;
             _info.Clear();
@@ -172,15 +183,40 @@ public class UI : MonoBehaviour
             if (_curInteractObject == null)
             {
                 _curInteractObject = hitObject;
-                _interactLine.SetActive(true);
-                _lineImage.fillAmount = 0;
-                _targetInfoBackgroundImage.fillAmount = 0;
+
+                // interact drawline
+                if (!hitObject.CompareTag(_interactTagName04))
+                {
+                    _interactLine.SetActive(true);
+                    _lineImage.fillAmount = 0;
+                    _targetInfoBackgroundImage.fillAmount = 0;
+                }
+                else
+                {
+                    _interactInfo.SetActive(false);
+                }
+
+                // interact key text
+                if (hitObject.CompareTag(_interactTagName01))
+                {
+                    _interactKeyText.text = "줍기";
+                }
+                else if (hitObject.CompareTag(_interactTagName02) || hitObject.CompareTag(_interactTagName03))
+                {
+                    _interactKeyText.text = "열기";
+                }
+                else if (hitObject.CompareTag(_interactTagName04))
+                {
+                    _interactKeyText.text = "진입하기";
+                }
+
+                _interactKey.SetActive(true);
 
                 try
                 {
                     _curWeaponScript = hitObject.GetComponent<Weapon>();
                 }
-                catch(Exception)
+                catch (Exception)
                 {
                     CPrint.Log("무기가 아닌 대상 상호작용");
                     // 무기가 아닐 경우 오류가 날 수밖에 없습니다.
@@ -208,12 +244,11 @@ public class UI : MonoBehaviour
                         if (hitObject.CompareTag(_interactTagName01))
                         {
                             _targetName = _curWeaponScript.Name;
-                            _info.Append($"공격력 : {_curWeaponScript.Damage}\n");
-                            _info.Append($"연사력 : {_curWeaponScript.FireDelay}\n");
-                            _info.Append($"장탄수 : {_curWeaponScript.Magazine}\n");
+                            _info.Append(_curWeaponScript.Infomation);
 
                             _targetNameText.text = _targetName;
                             _targetInfoText.text = _info.ToString();
+                            _interactInfo.SetActive(true);
                         }
                         else if (hitObject.CompareTag(_interactTagName02))
                         {
@@ -223,18 +258,17 @@ public class UI : MonoBehaviour
 
                             _targetNameText.text = _targetName;
                             _targetInfoText.text = _info.ToString();
+                            _interactInfo.SetActive(true);
                         }
-                        else if(hitObject.CompareTag(_interactTagName03))
+                        else if (hitObject.CompareTag(_interactTagName03))
                         {
                             _targetName = "탄약 상자";
                             _info.Append("다양한 탄약들을 담아둔 상자입니다.\n");
 
                             _targetNameText.text = _targetName;
                             _targetInfoText.text = _info.ToString();
-
+                            _interactInfo.SetActive(true);
                         }
-
-                        _interactInfo.SetActive(true);
                     }
                 }
             }
@@ -301,6 +335,10 @@ public class UI : MonoBehaviour
                 _slot02Image.gameObject.SetActive(false);
                 _slot03Image.gameObject.SetActive(true);
                 break;
+
+            default:
+                // Empty Temp Slot
+                break;
         }
 
         weapon.OnSetAmmo += SetAmmo;
@@ -331,7 +369,7 @@ public class UI : MonoBehaviour
     }
     private void ZoomMode(bool isRightClick)
     {
-        if(!_weaponManager.CurrentCanZoom)
+        if (!_weaponManager.CurrentCanZoom)
         {
             return;
         }
@@ -365,7 +403,7 @@ public class UI : MonoBehaviour
             return;
         }
 
-        
+
         // 크로스헤어
         if (_box == null)
         {

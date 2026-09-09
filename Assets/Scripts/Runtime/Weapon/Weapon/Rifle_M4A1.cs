@@ -16,6 +16,11 @@ public class M4A1 : Weapon
     {
         _id = 1;
         _name = "M4A1";
+        _infomation =
+            $"°ø°Ý·Â : {_damage}\n" +
+            $"¿¬»ç·Â : {_fireDelay}\n" +
+            $"ÀåÅº¼ö : {_magazine}¹ß\n" +
+            "»ç¿ë ÅºÈ¯ : ¼ÒÃÑÅº";
         _damage = 5f;
         _fireDelay = 0.075f;
         _recoil = 0.75f;

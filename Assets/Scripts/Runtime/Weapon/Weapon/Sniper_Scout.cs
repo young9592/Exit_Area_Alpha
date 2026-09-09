@@ -54,7 +54,13 @@ public class Scout : Weapon
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
 
         _canZoom = true;
-        
+
+        _infomation =
+    $"°ø°Ý·Â : {_damage}\n" +
+    $"¿¬»ç·Â : {_fireDelay + _reloadDelays[2]}\n" +
+    $"ÀåÅº¼ö : {_magazine}¹ß\n" +
+    "»ç¿ë ÅºÈ¯ : ¼ÒÃÑÅº";
+
         #region Null Check
 
         if (_fireClips.Count < 5 || _reloadClips.Count < 3 || _empty == null)

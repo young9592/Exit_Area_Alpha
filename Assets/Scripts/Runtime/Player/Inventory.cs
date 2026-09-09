@@ -6,13 +6,13 @@ public class Inventory : MonoBehaviour
     // Hand
     [SerializeField] private int _noneType = 0;
     // º“√—
-    [SerializeField] private int _arAmmo = 240;
+    [SerializeField] private int _arAmmo = 0;
     [SerializeField] private int _arAmmoMax = 240;
     // ±«√—
     [SerializeField] private int _hgAmmo = 160;
     [SerializeField] private int _hgAmmoMax = 160;
     // º¶∞«
-    [SerializeField] private int _sgAmmo = 60;
+    [SerializeField] private int _sgAmmo = 0;
     [SerializeField] private int _sgAmmoMax = 60;
     #endregion
 

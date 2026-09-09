@@ -64,6 +64,7 @@ public class Walker : Zombie
 
         // 상태 초기화
         _health = _healthMax;
+        _moveSpeedMax = Random.Range(_initMoveSpeedMin, _initMoveSpeedMax);
         _curState = State.Idle;
         ToggleCollider(true);
     }

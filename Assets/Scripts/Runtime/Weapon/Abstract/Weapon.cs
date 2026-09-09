@@ -81,6 +81,7 @@ public abstract class Weapon : MonoBehaviour
     protected AudioClip _empty = null;
 
     protected bool _canZoom;
+    protected string _infomation;
     #endregion
 
     #region Property
@@ -105,6 +106,8 @@ public abstract class Weapon : MonoBehaviour
     public bool CompliteReload => _completeReload;
     public int ReturnAmmo => _returnAmmo;
     public bool CanZoom => _canZoom;
+
+    public string Infomation => _infomation;
     #endregion
 
 

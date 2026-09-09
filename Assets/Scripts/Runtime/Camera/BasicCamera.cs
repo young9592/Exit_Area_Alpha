@@ -41,7 +41,7 @@ public partial class BasicCamera : MonoBehaviour
     [SerializeField] private Transform _firePointTr;
 
     [Header("상호작용")]
-    [SerializeField] private string _interactLayerName = "Item";
+    [SerializeField] private string _interactLayerName = "Interaction";
     [SerializeField] private float _interactDistance = 3f;
 
     [Header("반동 오프셋")]

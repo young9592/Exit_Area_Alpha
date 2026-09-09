@@ -16,6 +16,8 @@ public abstract class Zombie : MonoBehaviour
     [SerializeField] protected float _ATKHitDuration = 0.5f;
     [SerializeField] protected float _attackDistance = 1.5f;
     [SerializeField] protected float _moveSpeedMax = 3f;
+    [SerializeField] protected float _initMoveSpeedMax = 1f;
+    [SerializeField] protected float _initMoveSpeedMin = 0.8f;
     [SerializeField] protected float _jumpHeight = 3.5f;
     [SerializeField] protected float _jumpDelay = 4f;
     [SerializeField] protected float _detectDistance = 10f;
@@ -71,6 +73,7 @@ public abstract class Zombie : MonoBehaviour
 
         CPrint.Log($"현재 생존한 좀비의 수 : {_count}마리");
 
+        _animator.speed = Random.Range(0.9f, 1.1f);
         _isDead = false;
     }
 
