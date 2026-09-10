@@ -16,11 +16,6 @@ public class Glock17 : Weapon
     {
         _id = 3;
         _name = "Glock17";
-        _infomation = 
-            $"°ø°Ý·Â : {_damage}\n" +
-            $"¿¬»ç·Â : {_fireDelay}\n" +
-            $"ÀåÅº¼ö : {_magazine}¹ß\n" +
-            "»ç¿ë ÅºÈ¯ : ±ÇÃÑÅº";
         _damage = 10f;
         _fireDelay = 0.17f;
         _recoil = 1.2f;
@@ -50,6 +45,12 @@ public class Glock17 : Weapon
         _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Glock17/Reload/HG01_Reload_03"));
 
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
+
+        _infomation =
+        $"°ø°Ý·Â : {_damage}\n" +
+        $"¿¬»ç·Â : {_fireDelay}\n" +
+        $"ÀåÅº¼ö : {_magazine}¹ß\n" +
+        "»ç¿ë ÅºÈ¯ : ±ÇÃÑÅº";
 
         #region Null Check
 

@@ -30,7 +30,10 @@ public class Walker : Zombie
     [SerializeField] private BoxCollider _hitBoxLegL;
     [SerializeField] private BoxCollider _hitBoxLegR;
     [SerializeField] private GameObject _attackHitBox;
+    [SerializeField] private CheckForward _forwardDetect;
     [SerializeField] private BoxCollider _sliderBox;
+
+
 
     #region Field
     private State _curState = State.Idle;
@@ -38,6 +41,9 @@ public class Walker : Zombie
 
     private float _verticalVel = 0f;
     private bool _isFalling = false;
+
+    private string _attackSoundPath = "Sound/Enemy/Attack";
+    private string _deadSoundPath = "Sound/Enemy/Dead";
 
     private int _hashSpeed;
     private int _hashAttack;
@@ -277,6 +283,7 @@ public class Walker : Zombie
         _attackDelayTimer.SetTimer(_ATKDelay);
         _ATKHitTimer.SetTimer(_ATKHitDuration);
         _animator.SetTrigger(_hashAttack);
+        _audio.PlayOneShot(Resources.Load<AudioClip>(_attackSoundPath));
     }
     private void TargetMove(Vector3 moveDir)
     {
@@ -363,10 +370,7 @@ public class Walker : Zombie
             return;
         }
 
-        int layerMask = LayerMask.GetMask("Block");
-        Physics.Raycast(transform.position + transform.up * 0.1f, transform.forward, out RaycastHit hit, 0.5f, layerMask);
-
-        if (hit.collider == null)
+        if (!_forwardDetect.HitCheck)
         {
             return;
         }
@@ -391,6 +395,7 @@ public class Walker : Zombie
 
             _deadTimer.SetTimer(3f);
             _isDead = true;
+            _audio.PlayOneShot(Resources.Load<AudioClip>(_deadSoundPath));
         }
         else
         {
@@ -416,8 +421,8 @@ public class Walker : Zombie
     private void OnDrawGizmos()
     {
         // 좀비의 블록 감지범위
-        Gizmos.color = Color.blue;
-        Gizmos.DrawRay(transform.position + transform.up * 0.1f, transform.forward * 1f);
+        //Gizmos.color = Color.blue;
+        //Gizmos.DrawRay(transform.position + transform.up * 0.1f, transform.forward * 1f);
 
         // 좀비의 감지 범위
         Gizmos.color = Color.green;

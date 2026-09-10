@@ -1,5 +1,3 @@
-using UnityEngine;
-
 public class None : Weapon
 {
     private void Awake()

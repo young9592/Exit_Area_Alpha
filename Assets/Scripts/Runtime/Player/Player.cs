@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
@@ -36,6 +37,9 @@ public partial class Player : MonoBehaviour
     [SerializeField] private string _paramReload = "tReload";
     [SerializeField] private string _paramSwap = "tSwap";
 
+    [SerializeField] private string _paramBandage = "tBandage";
+    [SerializeField] private string _paramInjector = "tInjection";
+
     [SerializeField] private string _paramDead = "tDead";
 
     [Header("Mouse")]
@@ -50,6 +54,8 @@ public partial class Player : MonoBehaviour
     [SerializeField] private KeyCode _keySlot01 = KeyCode.Alpha1;
     [SerializeField] private KeyCode _keySlot02 = KeyCode.Alpha2;
     [SerializeField] private KeyCode _keySlot03 = KeyCode.Alpha3;
+    [SerializeField] private KeyCode _keySlot04 = KeyCode.Alpha4;
+    [SerializeField] private KeyCode _keySlot05 = KeyCode.Alpha5;
 
     [SerializeField] private string _keyHor = "Horizontal";
     [SerializeField] private string _keyVer = "Vertical";
@@ -86,6 +92,9 @@ public partial class Player : MonoBehaviour
     private bool _curentRun;
     private CTimer _steminaRecoverTimer = new CTimer();
 
+    // 주사기 지속시간
+    private CTimer _injectorTimer = new CTimer();
+
     // 현재 사망 상태인가?
     private bool _isDead;
 
@@ -108,6 +117,8 @@ public partial class Player : MonoBehaviour
     private int _hashFireDelay;
     private int _hashReload;
     private int _hashSwap;
+    private int _hashBandage;
+    private int _hashInjector;
     private int _hashDead;
     #endregion
 
@@ -164,6 +175,8 @@ public partial class Player : MonoBehaviour
         _hashJump = Animator.StringToHash(_paramJump);
         _hashLand = Animator.StringToHash(_paramLand);
         _hashSwap = Animator.StringToHash(_paramSwap);
+        _hashBandage = Animator.StringToHash(_paramBandage);
+        _hashInjector = Animator.StringToHash(_paramInjector);
         _hashDead = Animator.StringToHash(_paramDead);
         #endregion
 
@@ -209,6 +222,10 @@ public partial class Player : MonoBehaviour
                 _curentRun = false;
             }
         }
+        if (_injectorTimer.GetCurrentTimerState)
+        {
+            _injectorTimer.AddTimer();
+        }
         if (_swapDelayTimer.GetCurrentTimerState)
         {
             if (_swapDelayTimer.AddTimer())
@@ -216,6 +233,7 @@ public partial class Player : MonoBehaviour
                 _rig.enabled = _type != Weapon.HandType.None;
             }
         }
+        
 
 
         Move();
@@ -226,7 +244,8 @@ public partial class Player : MonoBehaviour
         Swap();
         Interact();
         Drop();
-        RecoverStemina();
+        RegenerationHealth();
+        RegenerationStemina();
     }
     // 이동방향 설계
     private Vector3 BuildMoveDirection(Vector3 input)
@@ -326,7 +345,7 @@ public partial class Player : MonoBehaviour
 
         // 3. 이동 속도
         bool sprintKeyDown = Input.GetKey(_keySprint);
-        float speed = _walkSpeed * (sprintKeyDown && _stemina != 0 ? _sprintMultiply : 1f) * (_doZoomState ? 0.5f : 1f);
+        float speed = _walkSpeed * (sprintKeyDown && _stemina != 0 ? _sprintMultiply : 1f) * (_injectorTimer.GetCurrentTimerState ? _injectorMultiply : 1f ) * (_doZoomState ? _zoomMultiply : 1f);
 
         // 4. 점프
         // 업데이트에서 한번만 체크해서 넘긴다.
@@ -377,7 +396,18 @@ public partial class Player : MonoBehaviour
         {
             if (_weaponManager.Fire())
             {
-                _animator.SetTrigger(_hashFire);
+                if (_weaponManager.CurrentSlotID == 6)
+                {
+                    _animator.SetTrigger(_hashBandage);
+                }
+                else if (_weaponManager.CurrentSlotID == 7)
+                {
+                    _animator.SetTrigger(_hashInjector);
+                }
+                else
+                {
+                    _animator.SetTrigger(_hashFire);
+                }
                 _animator.SetBool(_hashFireDelay, true);
             }
         }
@@ -445,6 +475,32 @@ public partial class Player : MonoBehaviour
                 _type = type;
             }
         }
+        else if (Input.GetKeyDown(_keySlot04))
+        {
+            // 메디킷 미보유
+            if (_weaponManager.HasMedikit == 0)
+            {
+                return;
+            }
+            _weaponManager.SelectSlot(3, out Weapon.HandType type);
+            _rig.enabled = false;
+            _swapDelayTimer.SetTimer(_swapDelay);
+            _animator.SetInteger(_hashHandState, (int)type);
+            _type = type;
+        }
+        else if (Input.GetKeyDown(_keySlot05))
+        {
+            // 주사기 미보유
+            if(_weaponManager.HasInjector == 0)
+            {
+                return;
+            }
+            _weaponManager.SelectSlot(4, out Weapon.HandType type);
+            _rig.enabled = false;
+            _swapDelayTimer.SetTimer(_swapDelay);
+            _animator.SetInteger(_hashHandState, (int)type);
+            _type = type;
+        }
     }
     // 아이템 상호작용
     private void Interact()
@@ -487,7 +543,7 @@ public partial class Player : MonoBehaviour
             _doZoomState = true;
             OnZoom?.Invoke(_doZoomState);
         }
-        else if(!Input.GetKey(_keyZoom))
+        else if (!Input.GetKey(_keyZoom))
         {
             _doZoomState = false;
             OnZoom?.Invoke(_doZoomState);
@@ -496,10 +552,10 @@ public partial class Player : MonoBehaviour
     // 초기 0번 슬롯 무기 착용
     private void InitSwap(int index)
     {
-        _weaponManager.SelectSlot(3, out Weapon.HandType type);
-        _rig.enabled = false;    
+        _weaponManager.SelectSlot(5, out Weapon.HandType type);
+        _rig.enabled = false;
         _animator.SetInteger(_hashHandState, (int)type);
-        
+
         if (_weaponManager.SelectSlot(index, out type))
         {
             _swapDelayTimer.SetTimer(_swapDelay);
@@ -512,14 +568,50 @@ public partial class Player : MonoBehaviour
     public void SuccessFireDelay()
     {
         _animator.SetBool(_hashFireDelay, false);
+
+        if(_weaponManager.CurrentIndex == 3)
+        {
+            // healing
+            InstantRecoveryHealth();
+        }
+        else if (_weaponManager.CurrentIndex == 4)
+        {
+            // injector
+            _injectorTimer.SetTimer(30f);
+        }
     }
     // 재장전 완료 트리거
     public void SuccessReload()
     {
         _rig.enabled = true;
     }
+
+    // 메디킷으로 즉시 회복
+    private void InstantRecoveryHealth()
+    {
+        CPrint.Log($"플레이어는 회복하였습니다.");
+        _health += _healthMax;
+        _health = Mathf.Clamp(_health, 0, _healthMax);
+        OnSetHealth?.Invoke(_health, _healthMax);
+    }
+    // 
+    private void RegenerationHealth()
+    {
+        if (_health == _healthMax)
+        {
+            return;
+        }
+
+        if (_injectorTimer.GetCurrentTimerState)
+        {
+            _health += _healthRegeneration * Time.deltaTime;
+            _health = Mathf.Clamp(_health, 0, _healthMax);
+            OnSetHealth?.Invoke(_health, _healthMax);
+        }
+    }
+
     // 스테미너 회복
-    private void RecoverStemina()
+    private void RegenerationStemina()
     {
         if (_stemina == _steminaMax)
         {
@@ -528,7 +620,7 @@ public partial class Player : MonoBehaviour
 
         if (!_curentRun)
         {
-            _stemina += _steminaConsume * Time.deltaTime;
+            _stemina += _steminaRegeneration * Time.deltaTime;
             _stemina = Mathf.Clamp(_stemina, 0, _steminaMax);
             OnSetStemina?.Invoke(_stemina, _steminaMax);
         }
@@ -542,7 +634,7 @@ public partial class Player : MonoBehaviour
         }
 
         _curentRun = true;
-        _stemina -= _steminaConsume * Time.deltaTime;
+        _stemina -= _steminaCost * Time.deltaTime;
         _stemina = Mathf.Clamp(_stemina, 0, _steminaMax);
         OnSetStemina?.Invoke(_stemina, _steminaMax);
     }
@@ -569,7 +661,7 @@ public partial class Player : MonoBehaviour
     {
         int layerMask = LayerMask.GetMask("Slider");
 
-        Debug.DrawRay(transform.position + transform.up * 1.5f, Vector3.down * 2f,Color.red);
+        Debug.DrawRay(transform.position + transform.up * 1.5f, Vector3.down * 2f, Color.red);
 
         Physics.Raycast(transform.position + transform.up, Vector3.down, out RaycastHit hit, 2f, layerMask);
 
@@ -583,7 +675,7 @@ public partial class Player : MonoBehaviour
         Vector3 moveVec = transform.position - hit.collider.transform.position;
         moveVec.y = 0f;
 
-        if(moveVec.magnitude <= 0.001f)
+        if (moveVec.magnitude <= 0.001f)
         {
             moveVec = Vector3.forward;
         }

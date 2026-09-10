@@ -25,7 +25,6 @@ public class UI : MonoBehaviour
     [SerializeField] private string _interactTagName02 = "WeaponCase";
     [SerializeField] private string _interactTagName03 = "AmmoCase";
     [SerializeField] private string _interactTagName04 = "StageLine";
-    [SerializeField] private string _interactTagName05 = "Item";
 
     [Header("UI Weapon Slot")]
     [SerializeField] private Image _equipWeaponImage;
@@ -33,6 +32,7 @@ public class UI : MonoBehaviour
     [SerializeField] private Image _slot01Image;
     [SerializeField] private Image _slot02Image;
     [SerializeField] private Image _slot03Image;
+    [SerializeField] private Image _slotNoneImage;
     [SerializeField] private TextMeshProUGUI _curWeaponAmmoText;
     [SerializeField] private TextMeshProUGUI _curWeaponInventoryAmmoText;
 
@@ -52,6 +52,8 @@ public class UI : MonoBehaviour
     [SerializeField] private Sprite _weaponSp03;
     [SerializeField] private Sprite _weaponSp04;
     [SerializeField] private Sprite _weaponSp05;
+    [SerializeField] private Sprite _weaponSp06;
+    [SerializeField] private Sprite _weaponSp07;
 
     [SerializeField] private Sprite _arBulletSp;
     [SerializeField] private Sprite _hgBulletSp;
@@ -310,6 +312,14 @@ public class UI : MonoBehaviour
                 selectWeaponSprite = _weaponSp05;
                 selectBulletSprite = _arBulletSp;
                 break;
+            case 6:
+                selectWeaponSprite = _weaponSp06;
+                selectBulletSprite = _noneSp;
+                break;
+            case 7:
+                selectWeaponSprite = _weaponSp07;
+                selectBulletSprite = _noneSp;
+                break;
         }
 
         _equipWeaponImage.sprite = selectWeaponSprite;
@@ -322,22 +332,32 @@ public class UI : MonoBehaviour
                 _slot01Image.gameObject.SetActive(true);
                 _slot02Image.gameObject.SetActive(false);
                 _slot03Image.gameObject.SetActive(false);
+                _slotNoneImage.gameObject.SetActive(false);
                 break;
 
             case 1:
                 _slot01Image.gameObject.SetActive(false);
                 _slot02Image.gameObject.SetActive(true);
                 _slot03Image.gameObject.SetActive(false);
+                _slotNoneImage.gameObject.SetActive(false);
                 break;
 
             case 2:
                 _slot01Image.gameObject.SetActive(false);
                 _slot02Image.gameObject.SetActive(false);
                 _slot03Image.gameObject.SetActive(true);
+                _slotNoneImage.gameObject.SetActive(false);
                 break;
 
+            case 3:
+            case 4:
+                _slot01Image.gameObject.SetActive(false);
+                _slot02Image.gameObject.SetActive(false);
+                _slot03Image.gameObject.SetActive(false);
+                _slotNoneImage.gameObject.SetActive(true);
+                break;
             default:
-                // Empty Temp Slot
+                // other Slot
                 break;
         }
 

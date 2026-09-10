@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
 
@@ -49,15 +50,21 @@ public class WeaponManager : MonoBehaviour
 
     private bool _isFire = false;
     private bool _isReloading = false;
-    private int _curSlotIdx = 3;
+    private int _curSlotIdx = 5;
+    // 치료나 주사기 사용후 복귀하기 위한 인덱스
+    private int _returnSlotIdx = 0;
     #endregion
 
     #region Property
+    public GameObject CurentSlotObject => _slotGO[_curSlotIdx];
     public Weapon CurrentSlot => _slots[_curSlotIdx];
     public bool CurrentCanZoom => _slots[_curSlotIdx].CanZoom;
     public int CurrentSlotID => _slots[_curSlotIdx].ID;
     public int CurrentSlotAmmo => _slots[_curSlotIdx].Ammo;
     public float CurRecoil => _curRecoil;
+    public int CurrentIndex => _curSlotIdx;
+    public int HasMedikit => _slots[3].ID;
+    public int HasInjector => _slots[4].ID;
     #endregion
 
     private void Awake()
@@ -111,8 +118,21 @@ public class WeaponManager : MonoBehaviour
             {
                 OnFire?.Invoke();
                 _isFire = false;
+
+                // 메디킷 사용 후 복귀 인덱스 반환
+                if(_curSlotIdx == 3 || _curSlotIdx == 4)
+                {
+                    // 이벤트 해제
+                    _slots[_curSlotIdx].OnSoundPlay -= SoundPlay;
+
+                    Destroy(_slotGO[_curSlotIdx].GetComponent<Weapon>());
+                    _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<None>();
+
+                    _curSlotIdx = _returnSlotIdx;
+                    OnSwap?.Invoke(_curSlotIdx);
+                }
             }
-            
+
             // 무결성 체크
             if (!_slots[_curSlotIdx].IsFire)
             {
@@ -142,13 +162,13 @@ public class WeaponManager : MonoBehaviour
     }
     public bool Fire()
     {
-        // 발사중 혹은 자전중일때
+        // 발사중 혹은 장전중일때
         if (_isFire || _isReloading)
         {
             return false;
         }
         // 맨손일 경우
-        if (_slots[_curSlotIdx].GetWeaponType == Weapon.WeaponType.None)
+        if (_slots[_curSlotIdx].ID == 0)
         {
             return false;
         }
@@ -170,7 +190,6 @@ public class WeaponManager : MonoBehaviour
             return false;
         }
 
-
         _isReloading = true;
         _slots[_curSlotIdx].Reload(_inventoryManager);
 
@@ -190,10 +209,22 @@ public class WeaponManager : MonoBehaviour
             return false;
         }
 
-        if(_curSlotIdx == index)
+        if (_curSlotIdx == index)
         {
             type = Weapon.HandType.None;
             return false;
+        }
+
+        // 메디킷이나 주사기 사용 시 복귀할 인덱스 저장
+        if(index == 3 || index == 4)
+        {
+            if (_slots[index].ID == 0)
+            {
+                type = _slots[_curSlotIdx].GetHandType;
+                return false;
+            }
+
+            _returnSlotIdx = _curSlotIdx;
         }
 
         // 핸드 트래커 위치 변경
@@ -209,7 +240,7 @@ public class WeaponManager : MonoBehaviour
         _handWeaponGO[_slots[index].ID].SetActive(true);
 
         type = _slots[index].GetHandType;
-        _cameraManager.SetHandState((BasicCamera.HandState) type);
+        _cameraManager.SetHandState((BasicCamera.HandState)type);
 
         _curSlotRecoilMin = _slots[index].RecoilMin;
         _curSlotRecoilMax = _slots[index].RecoilMax;
@@ -219,7 +250,7 @@ public class WeaponManager : MonoBehaviour
 
         if (_slots[index].ID != 0)
         {
-            SoundPlay(Resources.Load<AudioClip>("Sound/WeaponSwap"));
+            SoundPlay(Resources.Load<AudioClip>("Sound/Other/WeaponSwap"));
         }
 
         _curSlotIdx = index;
@@ -249,7 +280,6 @@ public class WeaponManager : MonoBehaviour
             return;
         }
 
-
         GameObject interactObject = _uiManager.InteractObject;
 
         if (interactObject == null)
@@ -257,73 +287,100 @@ public class WeaponManager : MonoBehaviour
             return;
         }
 
-        // 무기교체인 경우
+        // 줍기인 경우
         if (interactObject.CompareTag(_uiManager.InteractTagName01))
         {
             Weapon interactWeaponScript = _uiManager.InteractWeaponScript;
 
-            // 이벤트 해제
-            _slots[_curSlotIdx].OnMuzzleFlash -= MuzzleFlashPlay;
-            _slots[_curSlotIdx].OnBulletSpawn -= SpawnBullet;
-            _slots[_curSlotIdx].OnSoundPlay -= SoundPlay;
-
-            // None
-            if (_slots[_curSlotIdx].ID != 0)
+            if (interactWeaponScript.ID == 6)
             {
-                GameObject dropItem = Instantiate(_weaponPrefabs[_slots[_curSlotIdx].ID - 1], Camera.main.transform.position + Camera.main.transform.forward * 3, Quaternion.Euler(0, 0, 90));
-                Weapon dropWeaponScript = dropItem.GetComponent<Weapon>();
-                Rigidbody rb = dropItem.GetComponent<Rigidbody>();
-                rb.AddForce(Camera.main.transform.forward * 5f, ForceMode.Impulse);
-                dropWeaponScript.Initialize(_slots[_curSlotIdx].Ammo);
+                if (_slots[3].ID == 0)
+                {
+                    Destroy(_slotGO[3].GetComponent<Weapon>());
+                    _slots[3] = _slotGO[3].AddComponent<Medikit>();
+                    _slots[3].OnSoundPlay += SoundPlay;
+                    Destroy(interactObject);
+                }
             }
-
-            Destroy(_slotGO[_curSlotIdx].GetComponent<Weapon>());
-
-
-            switch (interactWeaponScript.ID)
+            else if (interactWeaponScript.ID == 7)
             {
-                case 1:
-                    _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<M4A1>();
-                    _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
-                    break;
-                case 2:
-                    _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<AK47>();
-                    _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
-                    break;
-                case 3:
-                    _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Glock17>();
-                    _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
-                    break;
-                case 4:
-                    _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Jackhammer>();
-                    _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
-                    break;
-                case 5:
-                    _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Scout>();
-                    _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
-                    break;
-                default:
-                    CPrint.Log("WeaponManager.cs 새로운 무기 추가됨 추가 필요");
-                    break;
+                if (_slots[4].ID == 0)
+                {
+                    Destroy(_slotGO[4].GetComponent<Weapon>());
+                    _slots[4] = _slotGO[4].AddComponent<Injector>();
+                    _slots[4].OnSoundPlay += SoundPlay;
+                    Destroy(interactObject);
+                }
             }
+            else
+            {
+                // 메디킷 슬롯이나 주사기 슬롯일땐 줍기 안되도록
+                if (_curSlotIdx == 3 || _curSlotIdx == 4)
+                {
+                    return;
+                }
 
-            Destroy(interactObject);
+                // 이벤트 해제
+                _slots[_curSlotIdx].OnMuzzleFlash -= MuzzleFlashPlay;
+                _slots[_curSlotIdx].OnBulletSpawn -= SpawnBullet;
+                _slots[_curSlotIdx].OnSoundPlay -= SoundPlay;
 
-            // 이벤트 등록
-            _slots[_curSlotIdx].OnMuzzleFlash += MuzzleFlashPlay;
-            _slots[_curSlotIdx].OnBulletSpawn += SpawnBullet;
-            _slots[_curSlotIdx].OnSoundPlay += SoundPlay;
+                // None
+                if (_slots[_curSlotIdx].ID != 0)
+                {
+                    GameObject dropItem = Instantiate(_weaponPrefabs[_slots[_curSlotIdx].ID - 1], Camera.main.transform.position + Camera.main.transform.forward * 3, Quaternion.Euler(0, 0, 90));
+                    Weapon dropWeaponScript = dropItem.GetComponent<Weapon>();
+                    Rigidbody rb = dropItem.GetComponent<Rigidbody>();
+                    rb.AddForce(Camera.main.transform.forward * 5f, ForceMode.Impulse);
+                    dropWeaponScript.Initialize(_slots[_curSlotIdx].Ammo);
+                }
 
-            OnSwap?.Invoke(_curSlotIdx);
+                Destroy(_slotGO[_curSlotIdx].GetComponent<Weapon>());
+
+                switch (interactWeaponScript.ID)
+                {
+                    case 1:
+                        _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<M4A1>();
+                        _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
+                        break;
+                    case 2:
+                        _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<AK47>();
+                        _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
+                        break;
+                    case 3:
+                        _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Glock17>();
+                        _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
+                        break;
+                    case 4:
+                        _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Jackhammer>();
+                        _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
+                        break;
+                    case 5:
+                        _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Scout>();
+                        _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
+                        break;
+                    default:
+                        CPrint.Log("WeaponManager.cs 새로운 무기 추가된 상태");
+                        break;
+                }
+                // 이벤트 등록
+                _slots[_curSlotIdx].OnMuzzleFlash += MuzzleFlashPlay;
+                _slots[_curSlotIdx].OnBulletSpawn += SpawnBullet;
+                _slots[_curSlotIdx].OnSoundPlay += SoundPlay;
+
+                OnSwap?.Invoke(_curSlotIdx);
+
+                Destroy(interactObject);
+            }
         }
-        else if(interactObject.CompareTag(_uiManager.InteractTagName02))
+        else if (interactObject.CompareTag(_uiManager.InteractTagName02))
         {
             ItemBox weaponCaseScript = interactObject.GetComponent<ItemBox>();
             weaponCaseScript.Open();
 
             int layerMask = LayerMask.NameToLayer("OnlyPlayerBlock");
             interactObject.layer = layerMask;
-            SoundPlay(Resources.Load<AudioClip>("Sound/ItemBoxOpen"));
+            SoundPlay(Resources.Load<AudioClip>("Sound/Other/ItemBoxOpen"));
         }
         else if (interactObject.CompareTag(_uiManager.InteractTagName03))
         {
@@ -335,18 +392,24 @@ public class WeaponManager : MonoBehaviour
 
             int layerMask = LayerMask.NameToLayer("OnlyPlayerBlock");
             interactObject.layer = layerMask;
-            SoundPlay(Resources.Load<AudioClip>("Sound/AmmoBoxOpen"));
+            SoundPlay(Resources.Load<AudioClip>("Sound/Other/AmmoBoxOpen"));
         }
 
         else if (interactObject.CompareTag(_uiManager.InteractTagName04))
         {
-            SoundPlay(Resources.Load<AudioClip>("Sound/BarricadeBreak"));
+            SoundPlay(Resources.Load<AudioClip>("Sound/Other/BarricadeBreak"));
             interactObject.SetActive(false);
         }
     }
     private void Drop()
     {
         if (_isFire || _isReloading)
+        {
+            return;
+        }
+
+        // 메디킷이나 주사기는 버리지 못하게
+        if (_curSlotIdx == 3 || _curSlotIdx == 4)
         {
             return;
         }

@@ -56,10 +56,10 @@ public class Scout : Weapon
         _canZoom = true;
 
         _infomation =
-    $"공격력 : {_damage}\n" +
-    $"연사력 : {_fireDelay + _reloadDelays[2]}\n" +
-    $"장탄수 : {_magazine}발\n" +
-    "사용 탄환 : 소총탄";
+        $"공격력 : {_damage}\n" +
+        $"연사력 : {_fireDelay + _reloadDelays[2]}\n" +
+        $"장탄수 : {_magazine}발\n" +
+        "사용 탄환 : 소총탄";
 
         #region Null Check
 

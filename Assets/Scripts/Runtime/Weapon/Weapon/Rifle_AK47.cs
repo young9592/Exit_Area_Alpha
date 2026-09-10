@@ -16,11 +16,6 @@ public class AK47 : Weapon
     {
         _id = 2;
         _name = "AK47";
-        _infomation =
-            $"°ø°Ý·Â : {_damage}\n" +
-            $"¿¬»ç·Â : {_fireDelay}\n" +
-            $"ÀåÅº¼ö : {_magazine}¹ß\n" +
-            "»ç¿ë ÅºÈ¯ : ¼ÒÃÑÅº";
         _damage = 7f;
         _fireDelay = 0.1f;
         _recoil = 1.25f;
@@ -33,8 +28,6 @@ public class AK47 : Weapon
         _pelletCount = 1;
         _handType = HandType.Rifle;
         _weaponType = WeaponType.Rifle;
-
-        _audioSource = GetComponentInParent<AudioSource>();
 
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire_01"));
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Fire/AR02_Fire_02"));
@@ -50,6 +43,12 @@ public class AK47 : Weapon
         _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload_03"));
 
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
+
+        _infomation =
+        $"°ø°Ý·Â : {_damage}\n" +
+        $"¿¬»ç·Â : {_fireDelay}\n" +
+        $"ÀåÅº¼ö : {_magazine}¹ß\n" +
+        "»ç¿ë ÅºÈ¯ : ¼ÒÃÑÅº";
 
         #region Null Check
 

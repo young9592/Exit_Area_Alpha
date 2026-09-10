@@ -7,6 +7,7 @@ public abstract class Zombie : MonoBehaviour
     [SerializeField] protected Animator _animator;
     [SerializeField] protected CharacterController _controller;
     [SerializeField] protected static Transform _playerTr;
+    [SerializeField] protected AudioSource _audio;
 
     [Header("Zombie Status")]
     [SerializeField] protected float _health = 100f;
@@ -51,13 +52,18 @@ public abstract class Zombie : MonoBehaviour
     }
     private void Start()
     {
-        if(_playerTr == null)
+        if (_playerTr == null)
         {
             _playerTr = Player.PlayerTr;
         }
 
+        if(_audio == null)
+        {
+            _audio = GetComponent<AudioSource>();
+        }
+
         #region NullCheck
-        if(_playerTr == null || _animator == null || _controller == null)
+        if (_playerTr == null || _animator == null || _controller == null || _audio == null)
         {
             CPrint.Error("Zombie.cs Null Find.");
             enabled = false;
@@ -94,12 +100,17 @@ public abstract class Zombie : MonoBehaviour
     protected virtual void Update()
     {
         #region NullCheck
-        if (_playerTr == null || _animator == null || _controller == null)
+        if (_playerTr == null || _animator == null || _controller == null || _audio == null)
         {
             CPrint.Error("Zombie.cs Null Find.");
             enabled = false;
             return;
         }
         #endregion
+    }
+
+    public static void OnAlertMode()
+    {
+        _isAlertMode = true;
     }
 }

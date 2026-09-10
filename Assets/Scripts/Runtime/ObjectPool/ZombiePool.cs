@@ -7,7 +7,7 @@ public class ZombiePool : ObjectPool
         _lifeMapUse = false;
     }
 
-    public void SpawnZombie(Vector3 enemySpawnPos, Quaternion enemySpawnViewDir)
+    public void SpawnZombie(Vector3 enemySpawnPos, Quaternion enemySpawnViewDir, bool isAlert)
     {
         GameObject enemyPrefab = GetPrefabFromPool();
 
@@ -18,6 +18,11 @@ public class ZombiePool : ObjectPool
         enemyPrefab.transform.position = spawnPos;
         enemyPrefab.transform.rotation = spawnRot;
         enemyPrefab.transform.localScale = spawnScale;
+
+        if (isAlert)
+        {
+            Zombie.OnAlertMode();
+        }
 
         enemyPrefab.SetActive(true);
 

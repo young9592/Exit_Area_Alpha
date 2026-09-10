@@ -6,15 +6,19 @@ public partial class Player : MonoBehaviour
     [Header("Health")]
     [SerializeField] private float _health = 100;
     [SerializeField] private float _healthMax = 100;
+    [SerializeField] private float _healthRegeneration = 1f;
     
     [Header("Stemina")]
     [SerializeField] private float _stemina = 100;
     [SerializeField] private float _steminaMax = 100;
-    [SerializeField] private float _steminaConsume = 1f;
+    [SerializeField] private float _steminaRegeneration = 15f;
+    [SerializeField] private float _steminaCost = 15f;
 
     [Header("Move")]
     [SerializeField] private float _walkSpeed = 4.0f;
     [SerializeField] private float _sprintMultiply = 1.5f;
+    [SerializeField] private float _injectorMultiply = 1.5f;
+    [SerializeField] private float _zoomMultiply = 0.5f;
 
     // 리지드 바디를 안쓰기 때문에 들어온 변수들
     [Header("Jump")]
@@ -22,6 +26,7 @@ public partial class Player : MonoBehaviour
     [SerializeField] private float _gravity = -9.81f;
     // 캐릭터가 땅에 박혀있는걸 방지
     [SerializeField] private float _groundStick = -2.0f;
+
     #endregion
 
     #region Property

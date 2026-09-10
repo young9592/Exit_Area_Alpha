@@ -16,11 +16,6 @@ public class Jackhammer : Weapon
     {
         _id = 4;
         _name = "JackHammer";
-        _infomation =
-            $"공격력 : {_damage}\n" +
-            $"연사력 : {_fireDelay}\n" +
-            $"장탄수 : {_magazine}발\n" +
-            "사용 탄환 : 산탄";
         _damage = 10f;
         _fireDelay = 0.5f;
         _recoil = 5f;
@@ -50,6 +45,12 @@ public class Jackhammer : Weapon
         _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Jackhammer/Reload/SG01_Reload_03"));
 
         _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
+
+        _infomation =
+        $"공격력 : {_damage}\n" +
+        $"연사력 : {_fireDelay}\n" +
+        $"장탄수 : {_magazine}발\n" +
+        "사용 탄환 : 산탄";
 
         #region Null Check
 

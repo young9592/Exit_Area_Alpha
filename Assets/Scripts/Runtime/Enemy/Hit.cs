@@ -10,11 +10,16 @@ public class Hit : MonoBehaviour
 
     #region Field
     private Rigidbody _rb;
+    private int _layerMask;
     #endregion
 
     private void Reset()
     {
         _rb = GetComponent<Rigidbody>();
+    }
+    private void Awake()
+    {
+        _layerMask = LayerMask.NameToLayer(_targetLayerName);
     }
     public void Initialize(float damage)
     {
@@ -22,9 +27,8 @@ public class Hit : MonoBehaviour
     }
     private void OnTriggerEnter(Collider other)
     {
-        int layerMask = LayerMask.NameToLayer(_targetLayerName);
 
-        if (other.gameObject.layer == layerMask)
+        if (other.gameObject.layer.Equals(_layerMask))
         {
             Player player = other.gameObject.GetComponent<Player>();
             player.TakeDamage(_damage);

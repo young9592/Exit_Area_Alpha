@@ -216,11 +216,8 @@ public class ObjectPool : MonoBehaviour
         // 초기 생성을 적절히 잘 잡아서 추가 생성분은 최대한 안생기게 유도
         CPrint.Warn("오브젝트 부족하여 추가 생성합니다.");
         GameObject extra = Instantiate(_prefab);
-        /*
-        extra.transform.SetParent(_poolRoot);
-        _pool.Enqueue(extra);
-        _pooledPrefab.Add(extra);
-        */
+        extra.SetActive(false);
+
         return extra;
     }
 }
