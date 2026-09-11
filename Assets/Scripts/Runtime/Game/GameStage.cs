@@ -22,6 +22,7 @@ public class GameManager : MonoBehaviour
     [Header("Object Pool")]
     [SerializeField] private ZombiePool _walkerPool;
     [SerializeField] private ZombiePool _runnerPool;
+    [SerializeField] private ZombiePool _spitterPool;
 
     [Header("Stage01")]
     [SerializeField] private List<GameObject> _areaLine01;
@@ -94,7 +95,7 @@ public class GameManager : MonoBehaviour
     }
     private void Awake()
     {
-        if(_audio == null)
+        if (_audio == null)
         {
             _audio = GetComponent<AudioSource>();
         }
@@ -321,9 +322,13 @@ public class GameManager : MonoBehaviour
         // Stage03_1
         else if (_curArea == Area.Area03_1)
         {
-            for (int i = 0; i < _spawnPoints03_1.Count; i++)
+            for (int i = 0; i < _spawnPoints03_1.Count - 7; i++)
             {
                 _runnerPool.SpawnZombie(_spawnPoints03_1[i].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
+            }
+            for (int i = _spawnPoints03_1.Count - 7; i < _spawnPoints03_1.Count; i++)
+            {
+                _spitterPool.SpawnZombie(_spawnPoints03_1[i].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
             }
 
             for (int i = 0; i < _backBlock03_1.Count; i++)
@@ -339,9 +344,13 @@ public class GameManager : MonoBehaviour
         // Stage03_2
         else if (_curArea == Area.Area03_2)
         {
-            for (int i = 0; i < _spawnPoints03_2.Count; i++)
+            for (int i = 0; i < 14; i++)
             {
                 _runnerPool.SpawnZombie(_spawnPoints03_2[i].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
+            }
+            for (int i = 14; i < _spawnPoints03_2.Count; i++)
+            {
+                _spitterPool.SpawnZombie(_spawnPoints03_2[i].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
             }
 
             for (int i = 0; i < _backBlock03_2.Count; i++)
@@ -357,7 +366,11 @@ public class GameManager : MonoBehaviour
         // Stage04_1
         else if (_curArea == Area.Area04_1)
         {
-            for (int i = 0; i < _spawnPoints04_1.Count; i++)
+            for (int i = 0; i < 4; i++)
+            {
+                _spitterPool.SpawnZombie(_spawnPoints04_1[i].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
+            }
+            for (int i = 4; i < _spawnPoints04_1.Count; i++)
             {
                 _runnerPool.SpawnZombie(_spawnPoints04_1[i].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
             }

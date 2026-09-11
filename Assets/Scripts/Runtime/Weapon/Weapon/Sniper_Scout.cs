@@ -23,7 +23,7 @@ public class Scout : Weapon
     {
         _id = 5;
         _name = "Scout";
-        _damage = 70f;
+        _damage = 180f;
         _fireDelay = 1f;
         _recoil = 10f;
         _recoilMin = 0f;
@@ -35,8 +35,6 @@ public class Scout : Weapon
         _pelletCount = 1;
         _handType = HandType.Rifle;
         _weaponType = WeaponType.Rifle;
-
-        _audioSource = GetComponentInParent<AudioSource>();
 
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Scout/Fire/SR01_Fire_01"));
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Scout/Fire/SR01_Fire_02"));
@@ -51,7 +49,10 @@ public class Scout : Weapon
         _reloadDelays.Add(1f);
         _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Scout/Reload/SR01_Reload_03"));
 
-        _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
+        if (_empty == null)
+        {
+            _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
+        }
 
         _canZoom = true;
 

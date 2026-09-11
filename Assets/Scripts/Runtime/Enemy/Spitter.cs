@@ -1,18 +1,22 @@
 using UnityEngine;
 
-public class Walker : Zombie
+public class Spitter : Zombie
 {
     public enum State
     {
         Idle,
         Trace,
-        Attack,
+        Move,
+        Spit,
         Dead
     }
 
+    [Header("Projectile Pool")]
+    [SerializeField] private BulletPool _spitPool;
+
     [Header("Animation Parameter")]
     [SerializeField] private string _paramSpeed = "fSpeed";
-    [SerializeField] private string _paramAttack = "tAttack";
+    [SerializeField] private string _paramSpit = "tSpit";
     [SerializeField] private string _paramFalling = "tFalling";
     [SerializeField] private string _paramLand = "tLand";
     [SerializeField] private string _paramJump = "tJump";
@@ -29,11 +33,14 @@ public class Walker : Zombie
     [SerializeField] private BoxCollider _hitBoxHandR;
     [SerializeField] private BoxCollider _hitBoxLegL;
     [SerializeField] private BoxCollider _hitBoxLegR;
-    [SerializeField] private GameObject _attackHitBox;
-    [SerializeField] private CheckForward _forwardDetect;
     [SerializeField] private BoxCollider _sliderBox;
+    [SerializeField] private Transform _launchPoint;
+    [SerializeField] private GameObject _forwardDetectGO;
 
-
+    [Header("Spit Inspector")]
+    [SerializeField] private float _force = 10f;
+    [SerializeField] private string _targetLayerName = "Player";
+    [SerializeField] private string _blockLayerName = "Block";
 
     #region Field
     private State _curState = State.Idle;
@@ -42,20 +49,28 @@ public class Walker : Zombie
     private float _verticalVel = 0f;
     private bool _isFalling = false;
 
+    private int _spitCount = 0;
+    private int _randDir = 0;
+    private Vector3 _positionMoveDir = Vector3.zero;
+
     private string _attackSoundPath = "Sound/Enemy/Attack";
     private string _deadSoundPath = "Sound/Enemy/Dead";
 
     private int _hashSpeed;
-    private int _hashAttack;
+    private int _hashSpit;
     private int _hashFalling;
     private int _hashLand;
     private int _hashJump;
     private int _hashDead;
 
+    private CheckForward _forwardDetectScript;
+
     // 공격 후 딜레이
     private CTimer _attackDelayTimer = new CTimer();
-    // 공격 판정 충돌박스 삭제 시간
-    private CTimer _ATKHitTimer = new CTimer();
+    // 바로 발사하는게 아닌 잠시 대기 후 공격
+    private CTimer _shootDelayTimer = new CTimer();
+    // 일정횟수 공격 후 이동시간
+    private CTimer _moveTimer = new CTimer();
     // 랜딩 모션 타이머
     private CTimer _landingTimer = new CTimer();
     // 점프 모션 타이머
@@ -72,6 +87,7 @@ public class Walker : Zombie
         _health = _healthMax;
         _moveSpeedMax = Random.Range(_initMoveSpeedMin, _initMoveSpeedMax);
         _curState = State.Idle;
+        _forwardDetectScript = _forwardDetectGO.GetComponent<CheckForward>();
         ToggleCollider(true);
     }
 
@@ -84,7 +100,7 @@ public class Walker : Zombie
     {
         #region StringToHash
         _hashSpeed = Animator.StringToHash(_paramSpeed);
-        _hashAttack = Animator.StringToHash(_paramAttack);
+        _hashSpit = Animator.StringToHash(_paramSpit);
         _hashFalling = Animator.StringToHash(_paramFalling);
         _hashLand = Animator.StringToHash(_paramLand);
         _hashJump = Animator.StringToHash(_paramJump);
@@ -96,10 +112,10 @@ public class Walker : Zombie
             _hitBoxArmL01 == null || _hitBoxArmL02 == null || _hitBoxHandL == null ||
             _hitBoxArmR01 == null || _hitBoxArmR02 == null || _hitBoxHandR == null ||
             _hitBoxLegL == null || _hitBoxLegR == null ||
-            _attackHitBox == null || _sliderBox == null
+            _launchPoint == null || _sliderBox == null
             )
         {
-            CPrint.Error("Walker.cs Null Find.");
+            CPrint.Error("Spitter.cs Null Find.");
             enabled = false;
             return;
         }
@@ -114,10 +130,10 @@ public class Walker : Zombie
             _hitBoxArmL01 == null || _hitBoxArmL02 == null || _hitBoxHandL == null ||
             _hitBoxArmR01 == null || _hitBoxArmR02 == null || _hitBoxHandR == null ||
             _hitBoxLegL == null || _hitBoxLegR == null ||
-            _attackHitBox == null || _sliderBox == null
+            _launchPoint == null || _sliderBox == null
             )
         {
-            CPrint.Error("Walker.cs Null Find.");
+            CPrint.Error("Spitter.cs Null Find.");
             enabled = false;
             return;
         }
@@ -131,13 +147,6 @@ public class Walker : Zombie
                 gameObject.SetActive(false);
             }
         }
-        if (_ATKHitTimer.GetCurrentTimerState)
-        {
-            if (_ATKHitTimer.AddTimer())
-            {
-                _attackHitBox.SetActive(false);
-            }
-        }
         if (_attackDelayTimer.GetCurrentTimerState)
         {
             _attackDelayTimer.AddTimer();
@@ -145,6 +154,23 @@ public class Walker : Zombie
         if (_jumpDelayTimer.GetCurrentTimerState)
         {
             _jumpDelayTimer.AddTimer();
+        }
+        if (_moveTimer.GetCurrentTimerState)
+        {
+            if (_moveTimer.AddTimer())
+            {
+                _curState = State.Idle;
+            }
+        }
+        if (_shootDelayTimer.GetCurrentTimerState)
+        {
+            if (_shootDelayTimer.AddTimer())
+            {
+                _launchPoint.rotation = Quaternion.LookRotation(_playerTr.position - transform.position, Vector3.up);
+                _spitPool.SpawnBulletRb(_damage, 0f, 0.2f, _force, 4f, _launchPoint);
+                _spitPool.SpawnBulletRb(_damage, 3f, 0.2f, _force, 4f, _launchPoint);
+                _spitPool.SpawnBulletRb(_damage, 3f, 0.2f, _force, 4f, _launchPoint);
+            }
         }
         if (_landingTimer.GetCurrentTimerState)
         {
@@ -165,6 +191,13 @@ public class Walker : Zombie
         CheckGrounded();
         CheckBlockingState();
     }
+
+    // 초기 생성 시 연결
+    public void Initialize(BulletPool bulletPool)
+    {
+        _spitPool = bulletPool;
+    }
+
     // 상태 변환
     protected override void ChangeState()
     {
@@ -175,11 +208,12 @@ public class Walker : Zombie
 
         Vector3 distanceVec = _playerTr.position - transform.position;
         float distance = distanceVec.sqrMagnitude;
-        // 내적 : 정면 90도 체크
         float dot = Vector3.Dot(transform.forward, distanceVec.normalized);
 
         float detectDistanceSqr = _detectDistance * _detectDistance;
         float attackDistanceSqr = _attackDistance * _attackDistance;
+
+        int layerMask = LayerMask.GetMask(_targetLayerName, _blockLayerName);
 
         if (!_isAlertMode)
         {
@@ -200,6 +234,22 @@ public class Walker : Zombie
         }
         else
         {
+            if (_spitCount >= 3 && !_attackDelayTimer.GetCurrentTimerState)
+            {
+                _randDir = Random.Range(0, 2);
+                _positionMoveDir = (transform.right * (_randDir == 0 ? 1 : -1)).normalized;
+                _curState = State.Move;
+                _moveTimer.SetTimer(Random.Range(0.5f, 1f));
+                _spitCount = 0;
+                return;
+            }
+
+            if (_moveTimer.GetCurrentTimerState)
+            {
+                _curState = State.Move;
+                return;
+            }
+
             if (distance > attackDistanceSqr)
             {
 
@@ -218,7 +268,29 @@ public class Walker : Zombie
             {
                 if (!_attackDelayTimer.GetCurrentTimerState)
                 {
-                    _curState = State.Attack;
+                    Vector3 targetPos = _playerTr.position + new Vector3(0, 1.7f, 0);
+                    Vector3 shootDirectionVec = (targetPos - _launchPoint.position).normalized;
+                    bool checkLaunchPointForward = Physics.Raycast(_launchPoint.position, shootDirectionVec, out RaycastHit hit, _attackDistance, layerMask);
+
+                    // 부딪힌 판정일 때
+                    if (checkLaunchPointForward)
+                    {
+                        // 비트마스킹
+                        int blockLayerMask = layerMask & ~LayerMask.GetMask(_targetLayerName);
+
+                        if (blockLayerMask == 1 << hit.collider.gameObject.layer)
+                        {
+                            _curState = State.Trace;
+                        }
+                        else
+                        {
+                            _curState = State.Spit;
+                        }
+                    }
+                    else
+                    {
+                        _curState = State.Trace;
+                    }
                 }
                 else
                 {
@@ -244,8 +316,11 @@ public class Walker : Zombie
             case State.Trace:
                 Trace();
                 break;
-            case State.Attack:
-                Attack();
+            case State.Move:
+                Move();
+                break;
+            case State.Spit:
+                Spit();
                 break;
             case State.Dead:
                 break;
@@ -278,10 +353,25 @@ public class Walker : Zombie
 
         Vector3 moveDir = (_playerTr.position - transform.position).normalized;
 
-        TargetMove(moveDir);
+        TargetMove(moveDir, false);
         TargetRotate(moveDir, true);
     }
-    private void Attack()
+    private void Move()
+    {
+        if (_isDead)
+        {
+            return;
+        }
+
+        if (_positionMoveDir == Vector3.zero)
+        {
+            return;
+        }
+
+        TargetMove(_positionMoveDir, true);
+        TargetRotate(_positionMoveDir, false);
+    }
+    private void Spit()
     {
         if (_isDead)
         {
@@ -295,25 +385,38 @@ public class Walker : Zombie
 
         Vector3 moveDir = (_playerTr.position - transform.position).normalized;
         TargetRotate(moveDir, false);
-
-        Hit hitScript = _attackHitBox.GetComponent<Hit>();
-        hitScript.Initialize(_damage);
-
-        _attackHitBox.SetActive(true);
+        _shootDelayTimer.SetTimer(0.25f);
         _attackDelayTimer.SetTimer(_ATKDelay);
-        _ATKHitTimer.SetTimer(_ATKHitDuration);
-        _animator.SetTrigger(_hashAttack);
+        _animator.SetTrigger(_hashSpit);
         _audio.PlayOneShot(Resources.Load<AudioClip>(_attackSoundPath));
+        _spitCount++;
     }
-    private void TargetMove(Vector3 moveDir)
+    private void TargetMove(Vector3 moveDir, bool checkFallAndBlock)
     {
         if (_isDead)
         {
             return;
         }
 
-        _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, _moveSpeedMax, 1f - Mathf.Exp(-2 * Time.deltaTime));
-        _curMoveSpeed = Mathf.Clamp(_curMoveSpeed, 0, _moveSpeedMax);
+        if (checkFallAndBlock)
+        {
+            bool fallCheck = Physics.Raycast(_forwardDetectGO.transform.position, Vector3.down, 1f);
+
+            if (!fallCheck)
+            {
+                _moveTimer.OffTimer();
+            }
+        }
+
+        if (!checkFallAndBlock)
+        {
+            _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, _moveSpeedMax, 1f - Mathf.Exp(-2 * Time.deltaTime));
+            _curMoveSpeed = Mathf.Clamp(_curMoveSpeed, 0, _moveSpeedMax);
+        }
+        else
+        {
+            _curMoveSpeed = _moveSpeedMax;
+        }
 
         Vector3 velocity = moveDir * _curMoveSpeed;
         velocity.y = _verticalVel;
@@ -370,7 +473,7 @@ public class Walker : Zombie
         {
             if (!_isFalling)
             {
-                if(_controller.velocity.y <= _fallingCheckSpeed)
+                if (_controller.velocity.y <= _fallingCheckSpeed)
                 {
                     _isFalling = true;
                     _animator.SetTrigger(_hashFalling);
@@ -394,12 +497,11 @@ public class Walker : Zombie
             return;
         }
 
-        // 걸리는 경우가 추적 상태일때만이기 때문에 다른 상태일땐 return
-        if (_curState == State.Idle || _curState == State.Attack)
+        if (_curState == State.Idle || _curState == State.Spit)
         {
             return;
         }
-        // 점프 쿨타임
+
         if (_jumpDelayTimer.GetCurrentTimerState)
         {
             return;
@@ -410,7 +512,7 @@ public class Walker : Zombie
             return;
         }
 
-        if (!_forwardDetect.HitCheck)
+        if (!_forwardDetectScript.HitCheck)
         {
             return;
         }

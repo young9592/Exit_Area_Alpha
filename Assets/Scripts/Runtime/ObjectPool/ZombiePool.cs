@@ -2,6 +2,10 @@ using UnityEngine;
 
 public class ZombiePool : ObjectPool
 {
+    [Header("Use BulletPool")]
+    [SerializeField] private bool _useBulletPool = false;
+    [SerializeField] private BulletPool _bulletPool;
+
     private void Awake()
     {
         _lifeMapUse = false;
@@ -10,6 +14,12 @@ public class ZombiePool : ObjectPool
     public void SpawnZombie(Vector3 enemySpawnPos, Quaternion enemySpawnViewDir, bool isAlert)
     {
         GameObject enemyPrefab = GetPrefabFromPool();
+
+        if (_useBulletPool)
+        {
+            Spitter spitterScript = enemyPrefab.GetComponent<Spitter>();
+            spitterScript.Initialize(_bulletPool);
+        }
 
         Vector3 spawnPos = enemySpawnPos;
         Quaternion spawnRot = enemySpawnViewDir;

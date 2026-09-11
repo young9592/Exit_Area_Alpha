@@ -29,10 +29,12 @@ public class UI : MonoBehaviour
     [Header("UI Weapon Slot")]
     [SerializeField] private Image _equipWeaponImage;
     [SerializeField] private Image _equipWeaponBulletImage;
+    [SerializeField] private Image _freamImage;
     [SerializeField] private Image _slot01Image;
     [SerializeField] private Image _slot02Image;
     [SerializeField] private Image _slot03Image;
-    [SerializeField] private Image _slotNoneImage;
+    [SerializeField] private Image _slot04Image;
+    [SerializeField] private Image _slot05Image;
     [SerializeField] private TextMeshProUGUI _curWeaponAmmoText;
     [SerializeField] private TextMeshProUGUI _curWeaponInventoryAmmoText;
 
@@ -54,10 +56,17 @@ public class UI : MonoBehaviour
     [SerializeField] private Sprite _weaponSp05;
     [SerializeField] private Sprite _weaponSp06;
     [SerializeField] private Sprite _weaponSp07;
+    [SerializeField] private Sprite _weaponSp08;
+    [SerializeField] private Sprite _weaponSp09;
 
     [SerializeField] private Sprite _arBulletSp;
     [SerializeField] private Sprite _hgBulletSp;
     [SerializeField] private Sprite _sgBulletSp;
+    [SerializeField] private Sprite _lmgBulletSp;
+
+    [SerializeField] private Sprite _weaponFreamSp;
+    [SerializeField] private Sprite _medikitFreamSp;
+    [SerializeField] private Sprite _injectorFreamSp;
 
     [Header("Zoom View")]
     [SerializeField] private GameObject _zoomGo;
@@ -95,7 +104,6 @@ public class UI : MonoBehaviour
     #region Property
     public GameObject InteractObject => _curInteractObject;
     public Weapon InteractWeaponScript => _curWeaponScript;
-
     public string InteractTagName01 => _interactTagName01;
     public string InteractTagName02 => _interactTagName02;
     public string InteractTagName03 => _interactTagName03;
@@ -145,6 +153,9 @@ public class UI : MonoBehaviour
                 break;
             case Weapon.WeaponType.Shotgun:
                 inventoryAmmo = _inventory.AmmoSG;
+                break;
+            case Weapon.WeaponType.LMG:
+                inventoryAmmo = _inventory.AmmoLMG;
                 break;
             case Weapon.WeaponType.Melee:
                 break;
@@ -320,6 +331,14 @@ public class UI : MonoBehaviour
                 selectWeaponSprite = _weaponSp07;
                 selectBulletSprite = _noneSp;
                 break;
+            case 8:
+                selectWeaponSprite = _weaponSp08;
+                selectBulletSprite = _hgBulletSp;
+                break;
+            case 9:
+                selectWeaponSprite = _weaponSp09;
+                selectBulletSprite = _lmgBulletSp;
+                break;
         }
 
         _equipWeaponImage.sprite = selectWeaponSprite;
@@ -332,29 +351,41 @@ public class UI : MonoBehaviour
                 _slot01Image.gameObject.SetActive(true);
                 _slot02Image.gameObject.SetActive(false);
                 _slot03Image.gameObject.SetActive(false);
-                _slotNoneImage.gameObject.SetActive(false);
+                _slot04Image.gameObject.SetActive(false);
+                _slot05Image.gameObject.SetActive(false);
+                _freamImage.sprite = _weaponFreamSp;
                 break;
-
             case 1:
                 _slot01Image.gameObject.SetActive(false);
                 _slot02Image.gameObject.SetActive(true);
                 _slot03Image.gameObject.SetActive(false);
-                _slotNoneImage.gameObject.SetActive(false);
+                _slot04Image.gameObject.SetActive(false);
+                _slot05Image.gameObject.SetActive(false);
+                _freamImage.sprite = _weaponFreamSp;
                 break;
-
             case 2:
                 _slot01Image.gameObject.SetActive(false);
                 _slot02Image.gameObject.SetActive(false);
                 _slot03Image.gameObject.SetActive(true);
-                _slotNoneImage.gameObject.SetActive(false);
+                _slot04Image.gameObject.SetActive(false);
+                _slot05Image.gameObject.SetActive(false);
+                _freamImage.sprite = _weaponFreamSp;
                 break;
-
             case 3:
+                _slot01Image.gameObject.SetActive(false);
+                _slot02Image.gameObject.SetActive(false);
+                _slot03Image.gameObject.SetActive(false);
+                _slot04Image.gameObject.SetActive(true);
+                _slot05Image.gameObject.SetActive(false);
+                _freamImage.sprite = _medikitFreamSp;
+                break;
             case 4:
                 _slot01Image.gameObject.SetActive(false);
                 _slot02Image.gameObject.SetActive(false);
                 _slot03Image.gameObject.SetActive(false);
-                _slotNoneImage.gameObject.SetActive(true);
+                _slot04Image.gameObject.SetActive(false);
+                _slot05Image.gameObject.SetActive(true);
+                _freamImage.sprite = _injectorFreamSp;
                 break;
             default:
                 // other Slot

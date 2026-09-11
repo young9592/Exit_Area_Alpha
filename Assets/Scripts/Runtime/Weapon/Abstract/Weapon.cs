@@ -47,6 +47,7 @@ public abstract class Weapon : MonoBehaviour
         HandGun,
         Rifle,
         Shotgun,
+        LMG,
         Melee,
         Throw
     }
@@ -78,7 +79,7 @@ public abstract class Weapon : MonoBehaviour
 
     protected CTimer _fireDelayTimer = new CTimer();
     protected CTimer _reloadDelayTimer = new CTimer();
-    protected AudioClip _empty = null;
+    protected static AudioClip _empty = null;
 
     protected bool _canZoom;
     protected string _infomation;

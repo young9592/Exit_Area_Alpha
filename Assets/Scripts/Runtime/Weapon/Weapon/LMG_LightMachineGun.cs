@@ -1,11 +1,13 @@
 using UnityEngine;
 
-public class M4A1 : Weapon
+public class LightMachineGun : Weapon
 {
     private enum ReloadState
     {
-        MagazineDrop,
-        MagazineInsert,
+        BoxOpen,
+        BeltUnload,
+        BeltLoad,
+        BoxClose,
         Bolt,
         None
     }
@@ -14,35 +16,39 @@ public class M4A1 : Weapon
 
     private void Awake()
     {
-        _id = 1;
-        _name = "M4A1";
+        _id = 9;
+        _name = "LightMachineGun";
         _damage = 38f;
-        _fireDelay = 0.075f;
-        _recoil = 0.75f;
-        _recoilMin = 0f;
-        _recoilMax = 15f;
-        _ammo = 30;
-        _magazine = 30;
+        _fireDelay = 0.06f;
+        _recoil = 0.8f;
+        _recoilMin = 0.5f;
+        _recoilMax = 10f;
+        _ammo = 100;
+        _magazine = 100;
         _returnAmmo = 0;
 
         _pelletCount = 1;
         _handType = HandType.Rifle;
-        _weaponType = WeaponType.Rifle;
+        _weaponType = WeaponType.LMG;
 
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_01"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_02"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_03"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_04"));
-        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Fire/AR01_Fire_05"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Fire/LMG01_Fire_01"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Fire/LMG01_Fire_02"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Fire/LMG01_Fire_03"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Fire/LMG01_Fire_04"));
+        _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Fire/LMG01_Fire_05"));
 
         _reloadDelays.Add(1f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload_01"));
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Reload/LMG01_Reload_01"));
         _reloadDelays.Add(1f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload_02"));
-        _reloadDelays.Add(1.08f);
-        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/M4A1/Reload/AR01_Reload_03"));
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Reload/LMG01_Reload_02"));
+        _reloadDelays.Add(1f);
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Reload/LMG01_Reload_03"));
+        _reloadDelays.Add(1f);
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Reload/LMG01_Reload_04"));
+        _reloadDelays.Add(1f);
+        _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/LMG/Reload/LMG01_Reload_05"));
 
-        if(_empty == null)
+        if (_empty == null)
         {
             _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
         }
@@ -51,11 +57,11 @@ public class M4A1 : Weapon
         $"공격력 : {_damage}\n" +
         $"연사력 : {_fireDelay}\n" +
         $"장탄수 : {_magazine}발\n" +
-        "사용 탄환 : 소총탄";
+        "사용 탄환 : 지원화기탄";
 
         #region Null Check
 
-        if (_fireClips.Count < 5 || _reloadClips.Count < 3 || _empty == null)
+        if (_fireClips.Count < 5 || _reloadClips.Count < 5 || _empty == null)
         {
             CPrint.Error($"{_name}.cs Sound Load Fail.");
             return;
@@ -86,10 +92,16 @@ public class M4A1 : Weapon
                 {
                     switch (_reloadState)
                     {
-                        case ReloadState.MagazineDrop:
-                            Insert();
+                        case ReloadState.BoxOpen:
+                            BeltUnload();
                             break;
-                        case ReloadState.MagazineInsert:
+                        case ReloadState.BeltUnload:
+                            BeltLoad();
+                            break;
+                        case ReloadState.BeltLoad:
+                            BoxClose();
+                            break;
+                        case ReloadState.BoxClose:
                             Bolt();
                             break;
                         case ReloadState.Bolt:
@@ -125,13 +137,11 @@ public class M4A1 : Weapon
         Mathf.Clamp(curRecoil, _recoilMin, _recoilMax);
 
         // 사운드 출력
-        int randomSound = UnityEngine.Random.Range(0, _fireClips.Count);
+        int randomSound = Random.Range(0, _fireClips.Count);
         CallSoundPlay(FireClips[randomSound]);
         _fireDelayTimer.SetTimer(_fireDelay);
 
-
         CallSetAmmo(_weaponType, _ammo);
-
     }
 
     public override void Reload(Inventory inventory)
@@ -144,31 +154,41 @@ public class M4A1 : Weapon
         inventory.ReloadAmmo(_weaponType, _ammo, _magazine, out int returnAmmo);
         _returnAmmo = returnAmmo;
 
-        // 인벤토리 탄약 없음
         if (_returnAmmo == 0)
         {
             return;
         }
 
-        Drop();
+        BoxOpen();
     }
 
-    private void Drop()
+    private void BoxOpen()
     {
         _isReload = true;
         _completeReload = false;
-        _reloadState = ReloadState.MagazineDrop;
+        _reloadState = ReloadState.BoxOpen;
         _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
         CallSoundPlay(ReloadClips[(int)_reloadState]);
     }
 
-    private void Insert()
+    private void BeltUnload()
     {
-        _reloadState = ReloadState.MagazineInsert;
+        _reloadState = ReloadState.BeltUnload;
         _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
         CallSoundPlay(ReloadClips[(int)_reloadState]);
     }
-
+    private void BeltLoad()
+    {
+        _reloadState = ReloadState.BeltLoad;
+        _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
+        CallSoundPlay(ReloadClips[(int)_reloadState]);
+    }
+    private void BoxClose()
+    {
+        _reloadState = ReloadState.BoxClose;
+        _reloadDelayTimer.SetTimer(_reloadDelays[(int)_reloadState]);
+        CallSoundPlay(ReloadClips[(int)_reloadState]);
+    }
     private void Bolt()
     {
         _reloadState = ReloadState.Bolt;
@@ -182,7 +202,6 @@ public class M4A1 : Weapon
         _completeReload = true;
         _reloadState = ReloadState.None;
         _ammo += _returnAmmo;
-
         CallSetAmmo(_weaponType, _ammo);
     }
 }

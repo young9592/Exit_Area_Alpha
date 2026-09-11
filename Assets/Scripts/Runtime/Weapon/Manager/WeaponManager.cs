@@ -43,7 +43,6 @@ public class WeaponManager : MonoBehaviour
     #endregion
 
     #region Field
-
     private float _curRecoil = 0f;
     private float _curSlotRecoilMin = 0f;
     private float _curSlotRecoilMax = 0f;
@@ -66,7 +65,6 @@ public class WeaponManager : MonoBehaviour
     public int HasMedikit => _slots[3].ID;
     public int HasInjector => _slots[4].ID;
     #endregion
-
     private void Awake()
     {
         _audioSource = GetComponent<AudioSource>();
@@ -84,7 +82,6 @@ public class WeaponManager : MonoBehaviour
         _player.OnInteract += Interact;
         _player.OnDrop += Drop;
     }
-
     private void Start()
     {
         for (int i = 0; i < _slots.Length; i++)
@@ -120,7 +117,7 @@ public class WeaponManager : MonoBehaviour
                 _isFire = false;
 
                 // 메디킷 사용 후 복귀 인덱스 반환
-                if(_curSlotIdx == 3 || _curSlotIdx == 4)
+                if (_curSlotIdx == 3 || _curSlotIdx == 4)
                 {
                     // 이벤트 해제
                     _slots[_curSlotIdx].OnSoundPlay -= SoundPlay;
@@ -216,15 +213,17 @@ public class WeaponManager : MonoBehaviour
         }
 
         // 메디킷이나 주사기 사용 시 복귀할 인덱스 저장
-        if(index == 3 || index == 4)
+        if (index == 3 || index == 4)
         {
             if (_slots[index].ID == 0)
             {
                 type = _slots[_curSlotIdx].GetHandType;
                 return false;
             }
-
-            _returnSlotIdx = _curSlotIdx;
+            if (_curSlotIdx != 3 && _curSlotIdx != 4)
+            {
+                _returnSlotIdx = _curSlotIdx;
+            }
         }
 
         // 핸드 트래커 위치 변경
@@ -359,6 +358,14 @@ public class WeaponManager : MonoBehaviour
                         _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<Scout>();
                         _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
                         break;
+                    case 8:
+                        _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<DesertEagle>();
+                        _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
+                        break;
+                    case 9:
+                        _slots[_curSlotIdx] = _slotGO[_curSlotIdx].AddComponent<LightMachineGun>();
+                        _slots[_curSlotIdx].Initialize(interactWeaponScript.Ammo);
+                        break;
                     default:
                         CPrint.Log("WeaponManager.cs 새로운 무기 추가된 상태");
                         break;
@@ -387,7 +394,7 @@ public class WeaponManager : MonoBehaviour
             AmmoBox ammoBoxScript = interactObject.GetComponent<AmmoBox>();
             ammoBoxScript.Open();
 
-            _inventoryManager.GetAmmoBox();
+            _inventoryManager.GetAmmoBox(_slots[0].GetWeaponType, _slots[1].GetWeaponType, _slots[2].GetWeaponType);
             OnSwap?.Invoke(_curSlotIdx);
 
             int layerMask = LayerMask.NameToLayer("OnlyPlayerBlock");

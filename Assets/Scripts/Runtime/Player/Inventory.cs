@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class Inventory : MonoBehaviour
@@ -7,13 +8,16 @@ public class Inventory : MonoBehaviour
     [SerializeField] private int _noneType = 0;
     // ¼ÒÃÑ
     [SerializeField] private int _arAmmo = 0;
-    [SerializeField] private int _arAmmoMax = 240;
+    [SerializeField] private int _arAmmoMax = 300;
     // ±ÇÃÑ
     [SerializeField] private int _hgAmmo = 160;
     [SerializeField] private int _hgAmmoMax = 160;
     // ¼¦°Ç
     [SerializeField] private int _sgAmmo = 0;
     [SerializeField] private int _sgAmmoMax = 60;
+    // Áö¿øÈ­±â
+    [SerializeField] private int _lmgAmmo = 0;
+    [SerializeField] private int _lmgAmmoMax = 100;
     #endregion
 
     #region Property
@@ -21,6 +25,7 @@ public class Inventory : MonoBehaviour
     public int AmmoAR => _arAmmo;
     public int AmmoHG => _hgAmmo;
     public int AmmoSG => _sgAmmo;
+    public int AmmoLMG => _lmgAmmo;
     #endregion
 
     // ºÎÁ·ÇÑ ÃÑ¾Ë¸¸Å­ ¹Þ¾Æ¿À±â
@@ -42,6 +47,9 @@ public class Inventory : MonoBehaviour
                 break;
             case Weapon.WeaponType.Shotgun:
                 GetTypeAmmo(ref _sgAmmo, requireAmmo, out returnAmmo);
+                break;
+            case Weapon.WeaponType.LMG:
+                GetTypeAmmo(ref _lmgAmmo, requireAmmo, out returnAmmo);
                 break;
             case Weapon.WeaponType.Melee:
                 break;
@@ -74,10 +82,35 @@ public class Inventory : MonoBehaviour
     }
 
     // Ammo Recharge
-    public void GetAmmoBox()
+    public void GetAmmoBox(Weapon.WeaponType slot01, Weapon.WeaponType slot02, Weapon.WeaponType slot03)
     {
-        _arAmmo = _arAmmoMax;
-        _hgAmmo = _hgAmmoMax;
-        _sgAmmo = _sgAmmoMax;
+        Weapon.WeaponType[] array = new Weapon.WeaponType[] { slot01, slot02, slot03 };
+
+        for (int i = 0; i < array.Length; i++)
+        {
+            switch (array[i])
+            {
+                case Weapon.WeaponType.None:
+                    break;
+                case Weapon.WeaponType.HandGun:
+                    _hgAmmo = _hgAmmoMax;
+                    break;
+                case Weapon.WeaponType.Rifle:
+                    _arAmmo = _arAmmoMax;
+                    break;
+                case Weapon.WeaponType.Shotgun:
+                    _sgAmmo = _sgAmmoMax;
+                    break;
+                case Weapon.WeaponType.LMG:
+                    _lmgAmmo = _lmgAmmoMax;
+                    break;
+                case Weapon.WeaponType.Melee:
+                    break;
+                case Weapon.WeaponType.Throw:
+                    break;
+                default:
+                    break;
+            }
+        }
     }
 }

@@ -16,7 +16,7 @@ public class Jackhammer : Weapon
     {
         _id = 4;
         _name = "JackHammer";
-        _damage = 10f;
+        _damage = 28f;
         _fireDelay = 0.5f;
         _recoil = 5f;
         _recoilMin = 1f;
@@ -28,8 +28,6 @@ public class Jackhammer : Weapon
         _pelletCount = 8;
         _handType = HandType.Rifle;
         _weaponType = WeaponType.Shotgun;
-
-        _audioSource = GetComponentInParent<AudioSource>();
 
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Jackhammer/Fire/SG01_Fire_01"));
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Jackhammer/Fire/SG01_Fire_02"));
@@ -44,7 +42,10 @@ public class Jackhammer : Weapon
         _reloadDelays.Add(1f);
         _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/Jackhammer/Reload/SG01_Reload_03"));
 
-        _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
+        if (_empty == null)
+        {
+            _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
+        }
 
         _infomation =
         $"°ø°Ý·Â : {_damage}\n" +

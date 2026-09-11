@@ -45,7 +45,6 @@ public class Bullet : MonoBehaviour
         }
     }
 
-    // 추후 만약 헤드 데미지 증가가 있으면 수정가능
     public void SetBullet(float damage)
     {
         _damage = damage;

@@ -15,8 +15,8 @@ public class AK47 : Weapon
     private void Awake()
     {
         _id = 2;
-        _name = "AK47";
-        _damage = 7f;
+        _name = "AK-47";
+        _damage = 50f;
         _fireDelay = 0.1f;
         _recoil = 1.25f;
         _recoilMin = 0.5f;
@@ -42,7 +42,10 @@ public class AK47 : Weapon
         _reloadDelays.Add(1.08f);
         _reloadClips.Add(Resources.Load<AudioClip>("Sound/Weapon/AK47/Reload/AR02_Reload_03"));
 
-        _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
+        if (_empty == null)
+        {
+            _empty = Resources.Load<AudioClip>("Sound/Weapon/Fire_Empty");
+        }
 
         _infomation =
         $"°ø°Ý·Â : {_damage}\n" +
