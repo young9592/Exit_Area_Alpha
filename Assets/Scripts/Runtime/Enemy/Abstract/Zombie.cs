@@ -27,7 +27,7 @@ public abstract class Zombie : MonoBehaviour
     [Header("RigidBody")]
     [SerializeField] protected float _groundStick = -2.0f;
     [SerializeField] protected float _gravity = -9.8f;
-    [SerializeField] protected float _fallingCheckSpeed = -3f;
+    [SerializeField] protected float _fallingCheckSpeed = -2f;
     #endregion
 
     #region Field

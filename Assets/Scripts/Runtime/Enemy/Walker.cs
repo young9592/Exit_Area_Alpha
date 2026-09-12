@@ -130,6 +130,7 @@ public class Walker : Zombie
             {
                 gameObject.SetActive(false);
             }
+            return;
         }
         if (_ATKHitTimer.GetCurrentTimerState)
         {
@@ -389,7 +390,7 @@ public class Walker : Zombie
             return;
         }
 
-        if (_controller.velocity.sqrMagnitude >= _moveSpeedMax * 0.2f)
+        if (_controller.velocity.sqrMagnitude >= _moveSpeedMax * _moveSpeedMax * 0.2f)
         {
             return;
         }

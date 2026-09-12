@@ -5,7 +5,7 @@ public class CTimer
     #region Field
     private float _time = 0f;
     private bool _onTimer = false;
-    private bool _onOffTimer = false;
+    private bool _setOffTimer = false;
     #endregion
 
     #region Property
@@ -28,16 +28,17 @@ public class CTimer
 
     public void OffTimer()
     {
-        _onOffTimer = true;
+        _setOffTimer = true;
     }
     public bool AddTimer()
     {
 
         // 타이머가 강제 종료되었을 때
-        if (_onOffTimer)
+        if (_setOffTimer)
         {
             _time = 0;
-            _onOffTimer = false;
+            _setOffTimer = false;
+            _onTimer = false;
             return true;
         }
 

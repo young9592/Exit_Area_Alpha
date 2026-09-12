@@ -10,6 +10,9 @@ public class Title : MonoBehaviour
     }
 
     #region Inspector
+    [Header("SceneManager")]
+    [SerializeField] private CSceneFlowManager _sceneManager;
+
     [Header("Menu Select")]
     [SerializeField] private RectTransform _menuRectTr;
     [SerializeField] private RectTransform _gameStart;
@@ -17,8 +20,8 @@ public class Title : MonoBehaviour
     [SerializeField] private RectTransform _gameExit;
 
     [Header("Menu KeyCode")]
-    [SerializeField] private KeyCode _upKey = KeyCode.UpArrow;
-    [SerializeField] private KeyCode _downKey = KeyCode.DownArrow;
+    [SerializeField] private KeyCode _upKey = KeyCode.W;
+    [SerializeField] private KeyCode _downKey = KeyCode.S;
     [SerializeField] private KeyCode _selectKey = KeyCode.Return;
     #endregion
 
@@ -36,23 +39,40 @@ public class Title : MonoBehaviour
 
     private void Awake()
     {
+        #region NullCheck
         if (
+            _sceneManager == null ||
             _menuRectTr == null ||
             _gameStart == null ||
             _gameControls == null ||
             _gameExit == null
           )
         {
-            CPrint.Error("Title.cs Null Find. Check Inspector");
+            CPrint.Error("Title.cs Null Find.");
             enabled = false;
             return;
         }
-
+        #endregion
     }
 
 
     private void Update()
     {
+        #region NullCheck
+        if (
+            _sceneManager == null ||
+            _menuRectTr == null ||
+            _gameStart == null ||
+            _gameControls == null ||
+            _gameExit == null
+          )
+        {
+            CPrint.Error("Title.cs Null Find.");
+            enabled = false;
+            return;
+        }
+        #endregion
+
         InitPosX();
         InputMenuKey();
         DrawLine();
@@ -79,6 +99,16 @@ public class Title : MonoBehaviour
         if (Input.GetKeyDown(_selectKey))
         {
             // Å° ÀÔ·Â
+            switch (_state)
+            {
+                case MenuState.GameStart:
+                    _sceneManager.LoadScene(ESceneID.Opening);
+                    break;
+                case MenuState.GameControls:
+                    break;
+                case MenuState.GameExit:
+                    break;
+            }
         }
     }
 

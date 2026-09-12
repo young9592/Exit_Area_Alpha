@@ -25,6 +25,7 @@ public class UI : MonoBehaviour
     [SerializeField] private string _interactTagName02 = "WeaponCase";
     [SerializeField] private string _interactTagName03 = "AmmoCase";
     [SerializeField] private string _interactTagName04 = "StageLine";
+    [SerializeField] private string _interactTagName05 = "Escape";
 
     [Header("UI Weapon Slot")]
     [SerializeField] private Image _equipWeaponImage;
@@ -108,6 +109,7 @@ public class UI : MonoBehaviour
     public string InteractTagName02 => _interactTagName02;
     public string InteractTagName03 => _interactTagName03;
     public string InteractTagName04 => _interactTagName04;
+    public string InteractTagName05 => _interactTagName05;
     #endregion
 
     private void Awake()
@@ -192,7 +194,6 @@ public class UI : MonoBehaviour
         }
         else
         {
-
             if (_curInteractObject == null)
             {
                 _curInteractObject = hitObject;
@@ -221,6 +222,10 @@ public class UI : MonoBehaviour
                 else if (hitObject.CompareTag(_interactTagName04))
                 {
                     _interactKeyText.text = "진입하기";
+                }
+                else if (hitObject.CompareTag(_interactTagName05))
+                {
+                    _interactKeyText.text = "탈출하기";
                 }
 
                 _interactKey.SetActive(true);

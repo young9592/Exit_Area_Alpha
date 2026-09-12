@@ -6,7 +6,7 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 0
-    path: Assets/Scenes/RemoteControl.unity
+    path: Assets/Scenes/SceneManager.unity
     guid: 1691d7bb943101b42821d0b92c778900
   - enabled: 0
     path: Assets/Scenes/Title.unity

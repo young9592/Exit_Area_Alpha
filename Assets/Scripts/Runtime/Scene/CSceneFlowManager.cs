@@ -15,7 +15,7 @@ public class CSceneFlowManager : MonoBehaviour
 
     // 디버그 모드
     [Header("옵션 - 핫키")]
-    [SerializeField] private bool _enableHotKeys = true;
+    [SerializeField] private bool _enableHotKeys = false;
 
     [Header("옵션 - 유지")]
     [SerializeField] private bool _dontDestroyOnLoad = true;
@@ -284,8 +284,6 @@ public class CSceneFlowManager : MonoBehaviour
             LoadScene(ESceneID.Game);
             _curTempSceneIndex = 2;
         }
-
-        /*
         if (Input.GetKeyDown(KeyCode.R))
         {
             ReloadCurrent();
@@ -298,8 +296,6 @@ public class CSceneFlowManager : MonoBehaviour
         {
             LoadPrev();
         }
-
-        */
     }
 
     // 인스턴스 정리
@@ -313,29 +309,6 @@ public class CSceneFlowManager : MonoBehaviour
 
     private void OnGUI()
     {
-        string temp1 = "타이틀 조작키 | 메뉴 이동 : ↑, ↓ ";
-        string temp2 = "게임 조작키 | 이동및 시점 : WASD 와 Mouse / 무기 교체 : 1, 2, 3 / 사격 : Mouse0 / 재장전 : R / 점프 : Space";
 
-        // temp
-        GUIStyle style = new GUIStyle(GUI.skin.label);
-        style.alignment = TextAnchor.MiddleRight;
-        style.fontSize = 50;
-
-        GUI.Label(new Rect(0, 0, Screen.width, 120), " Key Z : 타이틀 화면 | Key X : 게임 화면", style);
-        style.fontSize = 40;
-
-        string finaltemp = "";
-
-        if (_curTempSceneIndex == 1)
-        {
-            finaltemp = temp1;
-        }
-        else if (_curTempSceneIndex == 2)
-        {
-            finaltemp = temp2;
-        }
-
-
-        GUI.Label(new Rect(0, Screen.height - 120, Screen.width, 120), finaltemp, style);
     }
 }

@@ -401,11 +401,14 @@ public class WeaponManager : MonoBehaviour
             interactObject.layer = layerMask;
             SoundPlay(Resources.Load<AudioClip>("Sound/Other/AmmoBoxOpen"));
         }
-
         else if (interactObject.CompareTag(_uiManager.InteractTagName04))
         {
             SoundPlay(Resources.Load<AudioClip>("Sound/Other/BarricadeBreak"));
             interactObject.SetActive(false);
+        }
+        else if (interactObject.CompareTag(_uiManager.InteractTagName05))
+        {
+            CPrint.Log("엔딩씬 전환. 탈출에 성공하였습니다.");
         }
     }
     private void Drop()

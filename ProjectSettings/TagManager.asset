@@ -12,7 +12,7 @@ TagManager:
   - WeaponCase
   - AmmoCase
   - StageLine
-  - Item
+  - Escape
   layers:
   - Default
   - TransparentFX

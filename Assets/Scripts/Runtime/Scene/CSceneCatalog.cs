@@ -4,7 +4,9 @@ using UnityEngine;
 public enum ESceneID
 {
     Title = 0,
-    Game = 1
+    Opening = 1,
+    Game = 2,
+    Ending = 3
 }
 
 [Serializable]
@@ -22,7 +24,6 @@ public class CSceneCatalog : MonoBehaviour
 
     [Header("옵션")]
     [SerializeField] private bool _buildOnAwake = true;
-    // 딕셔너리를 준비하지 않았다면 외부에서 딕셔너리가 필요합니다.
     #endregion
 
     #region Field

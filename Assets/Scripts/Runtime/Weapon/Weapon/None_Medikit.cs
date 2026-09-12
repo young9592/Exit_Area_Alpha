@@ -13,7 +13,8 @@ public class Medikit : Weapon
         _fireDelay = 4.2f;
 
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Other/Medikit"));
-        _infomation = "사용자의 체력을 회복시켜줍니다.";
+        _infomation = "의료 붕대입니다.\n" +
+            "체력을 100 회복합니다.";
     }
     private void Update()
     {

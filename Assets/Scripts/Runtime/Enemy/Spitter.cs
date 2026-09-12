@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class Spitter : Zombie
 {
-    public enum State
+    public enum State : byte
     {
         Idle,
         Trace,
@@ -146,6 +146,7 @@ public class Spitter : Zombie
             {
                 gameObject.SetActive(false);
             }
+            return;
         }
         if (_attackDelayTimer.GetCurrentTimerState)
         {
@@ -202,6 +203,11 @@ public class Spitter : Zombie
     protected override void ChangeState()
     {
         if (_isDead)
+        {
+            return;
+        }
+
+        if (_jumpDelayTimer.GetCurrentTimerState)
         {
             return;
         }
@@ -268,23 +274,22 @@ public class Spitter : Zombie
             {
                 if (!_attackDelayTimer.GetCurrentTimerState)
                 {
+
                     Vector3 targetPos = _playerTr.position + new Vector3(0, 1.7f, 0);
                     Vector3 shootDirectionVec = (targetPos - _launchPoint.position).normalized;
                     bool checkLaunchPointForward = Physics.Raycast(_launchPoint.position, shootDirectionVec, out RaycastHit hit, _attackDistance, layerMask);
 
-                    // 부딪힌 판정일 때
                     if (checkLaunchPointForward)
                     {
-                        // 비트마스킹
-                        int blockLayerMask = layerMask & ~LayerMask.GetMask(_targetLayerName);
+                        int targetLayerMask = layerMask & ~LayerMask.GetMask(_blockLayerName);
 
-                        if (blockLayerMask == 1 << hit.collider.gameObject.layer)
+                        if (targetLayerMask == 1 << hit.collider.gameObject.layer)
                         {
-                            _curState = State.Trace;
+                            _curState = State.Spit;
                         }
                         else
                         {
-                            _curState = State.Spit;
+                            _curState = State.Trace;
                         }
                     }
                     else
@@ -352,8 +357,7 @@ public class Spitter : Zombie
         }
 
         Vector3 moveDir = (_playerTr.position - transform.position).normalized;
-
-        TargetMove(moveDir, false);
+        TargetMove(moveDir);
         TargetRotate(moveDir, true);
     }
     private void Move()
@@ -363,12 +367,7 @@ public class Spitter : Zombie
             return;
         }
 
-        if (_positionMoveDir == Vector3.zero)
-        {
-            return;
-        }
-
-        TargetMove(_positionMoveDir, true);
+        TargetMove(ref _positionMoveDir);
         TargetRotate(_positionMoveDir, false);
     }
     private void Spit()
@@ -391,32 +390,35 @@ public class Spitter : Zombie
         _audio.PlayOneShot(Resources.Load<AudioClip>(_attackSoundPath));
         _spitCount++;
     }
-    private void TargetMove(Vector3 moveDir, bool checkFallAndBlock)
+    private void TargetMove(Vector3 moveDir)
     {
         if (_isDead)
         {
             return;
         }
 
-        if (checkFallAndBlock)
-        {
-            bool fallCheck = Physics.Raycast(_forwardDetectGO.transform.position, Vector3.down, 1f);
+        _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, _moveSpeedMax, 1f - Mathf.Exp(-2f * Time.deltaTime));
+        _curMoveSpeed = Mathf.Clamp(_curMoveSpeed, 0, _moveSpeedMax);
 
-            if (!fallCheck)
-            {
-                _moveTimer.OffTimer();
-            }
+        Vector3 velocity = moveDir * _curMoveSpeed;
+        velocity.y = _verticalVel;
+        _controller.Move(velocity * Time.deltaTime);
+    }
+    private void TargetMove(ref Vector3 moveDir)
+    {
+        if (_isDead)
+        {
+            return;
         }
 
-        if (!checkFallAndBlock)
+        bool fallCheck = Physics.Raycast(_forwardDetectGO.transform.position, Vector3.down, 1f);
+
+        if (!fallCheck)
         {
-            _curMoveSpeed = Mathf.Lerp(_curMoveSpeed, _moveSpeedMax, 1f - Mathf.Exp(-2 * Time.deltaTime));
-            _curMoveSpeed = Mathf.Clamp(_curMoveSpeed, 0, _moveSpeedMax);
+            moveDir *= -1f;
         }
-        else
-        {
-            _curMoveSpeed = _moveSpeedMax;
-        }
+
+        _curMoveSpeed = _moveSpeedMax;
 
         Vector3 velocity = moveDir * _curMoveSpeed;
         velocity.y = _verticalVel;
@@ -492,7 +494,7 @@ public class Spitter : Zombie
             return;
         }
 
-        if (_controller.velocity.sqrMagnitude >= _moveSpeedMax * 0.2f)
+        if (_controller.velocity.sqrMagnitude >= _moveSpeedMax * _moveSpeedMax * 0.2f)
         {
             return;
         }

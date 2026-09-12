@@ -15,7 +15,8 @@ public class Injector : Weapon
         _fireClips.Add(Resources.Load<AudioClip>("Sound/Other/Injector"));
 
         _infomation =
-            "사용자의 체력을 회복시켜줍니다.\n" +
+            "30초간 다음의 효과를 받습니다.\n" +
+            "체력이 재생됩니다.\n" +
             "이동속도가 상승합니다.";
     }
 

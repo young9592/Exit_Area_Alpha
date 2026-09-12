@@ -177,8 +177,22 @@ public class GameManager : MonoBehaviour
         if (!_areaDelayTimer.GetCurrentTimerState)
         {
             int randSpotIndex = Random.Range(0, _spawnPoints05_1.Count);
+            int randZombie = Random.Range(0, 3);
 
-            _walkerPool.SpawnZombie(_spawnPoints05_1[randSpotIndex].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
+            switch (randZombie)
+            {
+                case 0:
+                    _walkerPool.SpawnZombie(_spawnPoints05_1[randSpotIndex].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
+                    break;
+                case 1:
+                    _runnerPool.SpawnZombie(_spawnPoints05_1[randSpotIndex].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
+                    break;
+                case 2:
+                    _spitterPool.SpawnZombie(_spawnPoints05_1[randSpotIndex].position, Quaternion.Euler(0, Random.Range(0f, 360f), 0), true);
+                    break;
+                default:
+                    break;
+            }
 
             _areaDelayTimer.SetTimer(Random.Range(3f, 5f));
             _wave += 1;
